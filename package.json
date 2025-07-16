@@ -1,0 +1,39 @@
+{
+  "name": "investor-iq",
+  "version": "1.0.0",
+  "description": "A flexible monorepo template for multi-language projects",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "npm run dev --workspace=@investor-iq/client",
+    "dev:server": "npm run dev --workspace=@investor-iq/server",
+    "build": "npm run build:types && npm run build:client && npm run build:server",
+    "build:client": "npm run build --workspace=@investor-iq/client",
+    "build:server": "npm run build --workspace=@investor-iq/server",
+    "start": "npm run start --workspace=@investor-iq/server",
+    "start:client": "npm run start --workspace=@investor-iq/client",
+    "start:server": "npm run start --workspace=@investor-iq/server",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "clean": "rimraf packages/*/dist packages/*/build",
+    "build:types": "npm run build --workspace=@investor-iq/types",
+    "dev:types": "npm run dev --workspace=@investor-iq/types",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch"
+  },
+  "keywords": [
+    "monorepo",
+    "template",
+    "workspace",
+    "polyglot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.10"
+  }
+}
