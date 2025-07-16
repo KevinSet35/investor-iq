@@ -1,265 +1,100 @@
-import React, { useState } from 'react';
-import {
-    AppBar,
-    Toolbar,
-    Typography,
-    Container,
-    Box,
-    Paper,
-    Stack,
-    Divider,
-    Button,
-    Card,
-    CardContent,
-    Alert,
-    Snackbar,
-    CircularProgress
-} from '@mui/material';
-import Grid from '@mui/material/Grid'; // Import Grid separately to ensure correct typing
-import {
-    Apartment as ApartmentIcon,
-    Code as CodeIcon,
-    Security as SecurityIcon,
-    Speed as SpeedIcon,
-    CheckCircle as CheckCircleIcon
-} from '@mui/icons-material';
-import { checkServerHealth } from './services/api';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import api from './services/api';
 
-function App() {
-    const [healthStatus, setHealthStatus] = useState<{ status?: string; message?: string } | null>(null);
-    const [loading, setLoading] = useState(false);
+// Environment configuration - moved from HomePage
+export interface EnvironmentConfig {
+    CLIENT_PORT: string;
+    SERVER_PORT: string;
+    API_URL: string;
+    // apiEndpoint: string;
+}
+
+export const getEnvironmentConfig = (): EnvironmentConfig => {
+    const CLIENT_PORT = process.env['REACT_APP_CLIENT_PORT'] || '3000';
+    const SERVER_PORT = process.env['REACT_APP_SERVER_PORT'] || '5000';
+    const API_URL = process.env['REACT_APP_API_URL'] || `http://localhost:${SERVER_PORT}/api`;
+    // const apiEndpoint = `${API_URL}/generatescript`;
+
+    // Log environment configuration in development
+    if (process.env.NODE_ENV === 'development') {
+        console.log('Environment Configuration:');
+        console.log(`- REACT_APP_CLIENT_PORT: ${CLIENT_PORT}`);
+        console.log(`- REACT_APP_SERVER_PORT: ${SERVER_PORT}`);
+        console.log(`- API URL: ${API_URL}`);
+        // console.log(`- API Endpoint: ${apiEndpoint}`);
+    }
+
+    return { CLIENT_PORT, SERVER_PORT, API_URL }; //, apiEndpoint };
+};
+
+interface User {
+    id: string;
+    name?: string;
+    email?: string;
+    // Add other user properties as needed
+}
+
+
+
+const App: React.FC = () => {
+    // Environment configuration
+    const { CLIENT_PORT, SERVER_PORT, API_URL }: EnvironmentConfig = getEnvironmentConfig();
+
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-    const handleHealthCheck = async () => {
-        setLoading(true);
-        setError(null);
+    const getUsersUrl = (): string => {
+        const url = `${API_URL}/users`;
+        console.log('user url:', url);
+        return url;
+    }
 
-        try {
-            const response = await checkServerHealth();
-            setHealthStatus(response);
-            setSnackbarOpen(true);
-        } catch (err) {
-            setError("Failed to connect to the server. Make sure it's running.");
-            setSnackbarOpen(true);
-        } finally {
-            setLoading(false);
-        }
+    // API Service
+    const apiService = {
+        getUsers: async (): Promise<User[]> => {
+            const response = await api.get('/users');
+            console.log(response);
+            return response.data.payload;
+        },
+
+
     };
 
-    const handleCloseSnackbar = () => {
-        setSnackbarOpen(false);
-    };
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await apiService.getUsers(); //'http://localhost:3000/users');
+                console.log('ress', response);
+                setUsers(response);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'An error occurred');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const features = [
-        {
-            title: 'Monorepo Structure',
-            description: 'Organized codebase with modular architecture for better development experience',
-            icon: <ApartmentIcon sx={{ fontSize: 40 }} color="primary" />
-        },
-        {
-            title: 'TypeScript Ready',
-            description: 'Full TypeScript support for both frontend and backend components',
-            icon: <CodeIcon sx={{ fontSize: 40 }} color="primary" />
-        },
-        {
-            title: 'Secure by Default',
-            description: 'Best security practices implemented across the entire stack',
-            icon: <SecurityIcon sx={{ fontSize: 40 }} color="primary" />
-        },
-        {
-            title: 'Performance Optimized',
-            description: 'Built with performance in mind to deliver exceptional user experience',
-            icon: <SpeedIcon sx={{ fontSize: 40 }} color="primary" />
-        }
-    ];
+        fetchUsers();
+    }, []);
+
+    if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
 
     return (
-        <>
-            <AppBar position="static">
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        investor-iq
-                    </Typography>
-                    <Button
-                        color="inherit"
-                        onClick={handleHealthCheck}
-                        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <CheckCircleIcon />}
-                        disabled={loading}
-                    >
-                        Check Server
-                    </Button>
-                    <Button color="inherit">Documentation</Button>
-                    <Button color="inherit">GitHub</Button>
-                </Toolbar>
-            </AppBar>
-
-            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={error ? "error" : "success"}
-                    sx={{ width: '100%' }}
-                >
-                    {error || (healthStatus && `Server status: ${healthStatus.status} - ${healthStatus.message}`)}
-                </Alert>
-            </Snackbar>
-
-            <Box
-                sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    py: 8,
-                    textAlign: 'center'
-                }}
-            >
-                <Container maxWidth="md">
-                    <Typography variant="h2" component="h1" gutterBottom>
-                        Welcome to investor-iq
-                    </Typography>
-                    <Typography variant="h5" sx={{ mb: 4 }}>
-                        A modern, flexible monorepo template for multi-language projects
-                    </Typography>
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        spacing={2}
-                        justifyContent="center"
-                    >
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            size="large"
-                            sx={{ px: 4, py: 1 }}
-                        >
-                            Get Started
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            color="inherit"
-                            size="large"
-                            sx={{ px: 4, py: 1 }}
-                        >
-                            Learn More
-                        </Button>
-                    </Stack>
-                </Container>
-            </Box>
-
-            <Container sx={{ py: 8 }}>
-                <Typography variant="h3" component="h2" textAlign="center" gutterBottom>
-                    Key Features
-                </Typography>
-                <Box sx={{ flexGrow: 1, mt: 2 }}>
-                    <Grid container spacing={4}>
-                        {features.map((feature, index) => (
-                            <Grid key={index} sx={{ width: { xs: '100%', sm: '50%' }, padding: 2 }}>
-                                <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                    <CardContent sx={{ flexGrow: 1 }}>
-                                        <Box display="flex" justifyContent="center" mb={2}>
-                                            {feature.icon}
-                                        </Box>
-                                        <Typography gutterBottom variant="h5" component="h3" textAlign="center">
-                                            {feature.title}
-                                        </Typography>
-                                        <Typography textAlign="center">
-                                            {feature.description}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
-                </Box>
-            </Container>
-
-            {healthStatus && (
-                <Container sx={{ mb: 4 }}>
-                    <Card variant="outlined">
-                        <CardContent>
-                            <Box display="flex" alignItems="center" gap={2}>
-                                <CheckCircleIcon color="success" />
-                                <Typography variant="h6">
-                                    Server Connection: {healthStatus.status}
-                                </Typography>
-                            </Box>
-                            <Typography color="text.secondary" sx={{ mt: 1 }}>
-                                {healthStatus.message}
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Container>
-            )}
-
-            <Box sx={{ bgcolor: '#f5f5f5', py: 6 }}>
-                <Container>
-                    <Typography variant="h3" component="h2" textAlign="center" gutterBottom>
-                        Project Structure
-                    </Typography>
-                    <Paper sx={{ p: 3, mt: 4 }}>
-                        <pre style={{ overflowX: 'auto', margin: 0 }}>
-                            {`investor-iq/
-├── package.json         # Root package.json for workspace management
-├── packages/            # All packages live here
-│   ├── client/          # React TypeScript client (@investor-iq/client)
-│   └── server/          # NestJS TypeScript server (@investor-iq/server)
-│       └── src/         # Server source code
-│           ├── app.module.ts          
-│           └── modules/               
-└── README.md`}
-                        </pre>
-                    </Paper>
-                </Container>
-            </Box>
-
-            <Container sx={{ py: 8 }}>
-                <Box sx={{ flexGrow: 1 }}>
-                    <Grid container spacing={3} alignItems="center">
-                        <Grid sx={{ width: { xs: '100%', md: '50%' }, padding: 2 }}>
-                            <Typography variant="h3" component="h2" gutterBottom>
-                                Ready to Build?
-                            </Typography>
-                            <Typography paragraph>
-                                investor-iq provides a solid foundation for building modern web applications
-                                with a well-structured monorepo setup, TypeScript integration, and best practices
-                                already configured.
-                            </Typography>
-                            <Button variant="contained" color="primary" size="large">
-                                Start Your Project
-                            </Button>
-                        </Grid>
-                        <Grid sx={{ width: { xs: '100%', md: '50%' }, padding: 2 }}>
-                            <Box sx={{ maxWidth: '100%', overflow: 'hidden' }}>
-                                <pre style={{
-                                    backgroundColor: '#282c34',
-                                    color: '#abb2bf',
-                                    padding: '16px',
-                                    borderRadius: '8px',
-                                    overflowX: 'auto'
-                                }}>
-                                    {`$ npx create-investor-iq my-project
-$ cd my-project
-$ npm install
-$ npm run dev
-
-🚀 Server running on port 5000
-✅ Client started successfully`}
-                                </pre>
-                            </Box>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Container>
-
-            <Divider />
-
-            <Box component="footer" sx={{ bgcolor: 'background.paper', py: 6 }}>
-                <Container>
-                    <Typography variant="body2" color="text.secondary" align="center">
-                        © {new Date().getFullYear()} investor-iq. All rights reserved.
-                    </Typography>
-                </Container>
-            </Box>
-        </>
+        <div>
+            <h1>Users</h1>
+            <ul>
+                {users.map((user) => (
+                    <li key={user.id}>
+                        <div>ID: {user.id}</div>
+                        {user.name && <div>Name: {user.name}</div>}
+                        {user.email && <div>Email: {user.email}</div>}
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
-}
+};
 
 export default App;

@@ -4,15 +4,15 @@ import { User } from './interfaces/user.interface';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+    constructor(private readonly usersService: UsersService) { }
 
-  @Get()
-  findAll(): User[] {
-    return this.usersService.findAll();
-  }
+    @Get()
+    findAll(): User[] {
+        return this.usersService.findAll();
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string): User {
-    return this.usersService.findOne(id);
-  }
+    @Get(':id')
+    findOne(@Param('id') id: string): User {
+        return this.usersService.findOne(id);
+    }
 }
