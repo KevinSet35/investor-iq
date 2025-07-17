@@ -1,6 +1,5 @@
-import { ResponseStatus } from "@investor-iq/types";
+import { ResponseStatus, ApiResponse } from "@investor-iq/types";
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
-
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -11,7 +10,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
         const status = exception.getStatus() || HttpStatus.INTERNAL_SERVER_ERROR;
 
-        response.status(status).json({
+        const errorResponse: ApiResponse = {
             status: ResponseStatus.ERROR,
             error: {
                 code: status,
@@ -23,6 +22,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
                 path: request.url,
                 method: request.method,
             },
-        });
+        };
+
+        response.status(status).json(errorResponse);
     }
 }
