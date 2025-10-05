@@ -33,3 +33,15 @@ yarn-error.log*
 *.sln
 *.sw?
 .DS_Store
+
+# Next.js
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Turbo
+.turbo
