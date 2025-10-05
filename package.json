@@ -35,13 +35,5 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "rimraf": "^5.0.10"
-  },
-  "dependencies": {
-    "@clerk/clerk-react": "^5.35.2",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.2.0",
-    "@mui/material": "^7.2.0",
-    "axios": "^1.10.0"
   }
 }
