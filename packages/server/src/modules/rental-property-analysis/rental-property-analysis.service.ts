@@ -5,6 +5,7 @@ import {
     FlexibleMortgageInput,
     MortgageCalculationResult
 } from '../mortgage-calculation/mortgage-calculation.service';
+import { RentalPropertyAnalysisMetadata, RentalFieldMetadata } from './rental-property-analysis.metadata';
 
 // ============================================================================
 // CONSTANTS
@@ -86,6 +87,24 @@ export interface RentalPropertyResult extends MortgageCalculationResult {
     metrics: Metrics;
 }
 
+// In rental-property-analysis.metadata.ts - add this interface
+export interface RentalPropertyMetadata {
+    income: RentalFieldMetadata[];
+    cashFlow: RentalFieldMetadata[];
+    metrics: RentalFieldMetadata[];
+    operatingExpenses: RentalFieldMetadata[];
+}
+
+/**
+ * Enhanced rental property result with field descriptions
+ */
+export interface RentalPropertyResultWithMetadata {
+    /** The actual calculation results */
+    data: RentalPropertyResult;
+    /** Metadata describing each field in the result, organized by category */
+    metadata: RentalPropertyMetadata;
+}
+
 // ============================================================================
 // SERVICE
 // ============================================================================
@@ -112,6 +131,67 @@ export class RentalPropertyAnalysisService {
 
         const mortgageResult = this.mortgageService.calculateMortgageWithScheduleFlexible(input);
         return this.buildRentalPropertyResult(input, mortgageResult);
+    }
+
+    /**
+     * Calculate rental property analysis with metadata
+     */
+    analyzeRentalPropertyWithMetadata(input: RentalPropertyInput): RentalPropertyResultWithMetadata {
+        const data = this.analyzeRentalProperty(input);
+        const metadata = this.getRentalPropertyMetadata();
+
+        return {
+            data,
+            metadata,
+        };
+    }
+
+    /**
+     * Calculate rental property analysis with schedule and metadata
+     */
+    analyzeRentalPropertyWithScheduleAndMetadata(input: RentalPropertyInput): RentalPropertyResultWithMetadata {
+        const data = this.analyzeRentalPropertyWithSchedule(input);
+        const metadata = this.getRentalPropertyMetadata();
+
+        return {
+            data,
+            metadata,
+        };
+    }
+
+    /**
+     * Get metadata descriptions for rental property fields
+     */
+    getRentalPropertyMetadata(): RentalPropertyMetadata {
+        return RentalPropertyAnalysisMetadata.getAllMetadata();
+    }
+
+    /**
+     * Get metadata for cash flow fields only
+     */
+    getCashFlowMetadata(): RentalFieldMetadata[] {
+        return RentalPropertyAnalysisMetadata.getCashFlowMetadata();
+    }
+
+    /**
+     * Get metadata for investment metrics only
+     */
+    getMetricsMetadata(): RentalFieldMetadata[] {
+        return RentalPropertyAnalysisMetadata.getMetricsMetadata();
+    }
+
+    /**
+     * Get metadata for operating expenses only
+     */
+    getOperatingExpensesMetadata(): RentalFieldMetadata[] {
+        return RentalPropertyAnalysisMetadata.getOperatingExpensesMetadata();
+    }
+
+    /**
+     * Get metadata for income fields only
+     */
+    getIncomeMetadata(): RentalFieldMetadata[] {
+        return RentalPropertyAnalysisMetadata.getIncomeMetadata();
     }
 
     // ============================================================================

@@ -1,5 +1,6 @@
 import { NumberUtils } from '@/common/utility/number.utils';
 import { Injectable } from '@nestjs/common';
+import { MortgageCalculationMetadata, FieldMetadata } from './mortgage-calculation.metadata';
 
 // ============================================================================
 // CONSTANTS
@@ -10,6 +11,8 @@ const PERCENT_TO_DECIMAL = 100;
 const DEFAULT_PMI_RATE = 0.0075; // 0.75% annually
 const PMI_THRESHOLD_LTV = 80; // PMI required when LTV > 80%
 const MINIMUM_DOWN_PAYMENT_FOR_NO_PMI = 20; // 20% down payment
+const DEFAULT_PROPERTY_TAX_RATE = 1.2; // 1.2% annually
+const DEFAULT_HOME_INSURANCE_ANNUAL = 1200; // $1200 annually
 
 // ============================================================================
 // INTERFACES
@@ -82,6 +85,8 @@ export interface AmortizationEntry {
     hoa: number;
     totalPayment: number;
     remainingBalance: number;
+    totalPrincipalPaid: number;
+    totalInterestPaid: number;
 }
 
 interface ValidationResult {
@@ -96,12 +101,67 @@ interface AffordabilityResult {
     estimatedMonthlyPayment: number;
 }
 
+/**
+ * Enhanced mortgage calculation result with field descriptions
+ */
+export interface MortgageCalculationResultWithMetadata {
+    /** The actual calculation results */
+    data: MortgageCalculationResult;
+    /** Metadata describing each field in the result */
+    metadata: FieldMetadata[];
+    /** Metadata describing amortization schedule fields */
+    amortizationMetadata?: FieldMetadata[];
+}
+
 // ============================================================================
 // SERVICE
 // ============================================================================
 
 @Injectable()
 export class MortgageCalculationService {
+
+    /**
+     * Get metadata descriptions for all mortgage calculation result fields
+     */
+    getResultMetadata(): FieldMetadata[] {
+        return MortgageCalculationMetadata.getResultMetadata();
+    }
+
+    /**
+     * Get metadata for amortization schedule fields
+     */
+    getAmortizationMetadata(): FieldMetadata[] {
+        return MortgageCalculationMetadata.getAmortizationMetadata();
+    }
+
+    /**
+     * Calculate mortgage and return with metadata
+     */
+    calculateMortgageWithMetadata(input: FlexibleMortgageInput): MortgageCalculationResultWithMetadata {
+        const data = this.calculateMortgageFlexible(input);
+        const metadata = this.getResultMetadata();
+
+        return {
+            data,
+            metadata,
+        };
+    }
+
+    /**
+     * Calculate mortgage with schedule and return with metadata
+     */
+    calculateMortgageWithScheduleAndMetadata(input: FlexibleMortgageInput): MortgageCalculationResultWithMetadata {
+        const data = this.calculateMortgageWithScheduleFlexible(input);
+        const metadata = this.getResultMetadata();
+        const amortizationMetadata = this.getAmortizationMetadata();
+
+        return {
+            data,
+            metadata,
+            amortizationMetadata,
+        };
+    }
+
     /**
      * Calculate mortgage with flexible input format
      * Supports both absolute values and percentages
@@ -129,8 +189,8 @@ export class MortgageCalculationService {
         annualInterestRate: number,
         loanTermYears: number,
         downPaymentPercentage: number,
-        propertyTaxRate: number = 1.2,
-        homeInsuranceAnnual: number = 1200,
+        propertyTaxRate: number = DEFAULT_PROPERTY_TAX_RATE,
+        homeInsuranceAnnual: number = DEFAULT_HOME_INSURANCE_ANNUAL,
         hoaMonthly: number = 0,
     ): AffordabilityResult {
         this.validateAffordabilityInput(
@@ -218,11 +278,11 @@ export class MortgageCalculationService {
     }
 
     private validatePercentageRanges(input: FlexibleMortgageInput, errors: string[]): void {
-        if (input.loanAmountPercent !== undefined && !this.isValidPercentage(input.loanAmountPercent)) {
+        if (input.loanAmountPercent !== undefined && !NumberUtils.isValidPercentage(input.loanAmountPercent)) {
             errors.push('loanAmountPercent must be between 0 and 100');
         }
 
-        if (input.downPaymentPercent !== undefined && !this.isValidPercentage(input.downPaymentPercent)) {
+        if (input.downPaymentPercent !== undefined && !NumberUtils.isValidPercentage(input.downPaymentPercent)) {
             errors.push('downPaymentPercent must be between 0 and 100');
         }
 
@@ -250,7 +310,7 @@ export class MortgageCalculationService {
         if (loanTermYears <= 0) {
             throw new Error('loanTermYears must be greater than 0');
         }
-        if (!this.isValidPercentage(downPaymentPercentage)) {
+        if (!NumberUtils.isValidPercentage(downPaymentPercentage)) {
             throw new Error('downPaymentPercentage must be between 0 and 100');
         }
     }
@@ -400,11 +460,16 @@ export class MortgageCalculationService {
     ): AmortizationEntry[] {
         const schedule: AmortizationEntry[] = [];
         let remainingBalance = loanAmount;
+        let totalPrincipalPaid = 0;
+        let totalInterestPaid = 0;
 
         for (let month = 1; month <= numberOfPayments; month++) {
             const interestPayment = remainingBalance * monthlyRate;
             const principalPayment = result.principalAndInterest - interestPayment;
             remainingBalance = Math.max(0, remainingBalance - principalPayment);
+
+            totalPrincipalPaid += principalPayment;
+            totalInterestPaid += interestPayment;
 
             const currentLTV = (remainingBalance / loanAmount) * PERCENT_TO_DECIMAL;
             const pmiThisMonth = this.calculatePMIForMonth(
@@ -432,6 +497,8 @@ export class MortgageCalculationService {
                 hoa: result.hoa,
                 totalPayment: NumberUtils.roundToTwo(totalPaymentThisMonth),
                 remainingBalance: NumberUtils.roundToTwo(remainingBalance),
+                totalPrincipalPaid: NumberUtils.roundToTwo(totalPrincipalPaid),
+                totalInterestPaid: NumberUtils.roundToTwo(totalInterestPaid),
             });
         }
 
@@ -547,11 +614,4 @@ export class MortgageCalculationService {
         return downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI && downPaymentPercentage > 0;
     }
 
-    private isValidPercentage(value: number): boolean {
-        return value >= 0 && value <= 100;
-    }
-
-    // private roundToTwo(value: number): number {
-    //     return Math.round(value * 100) / 100;
-    // }
 }

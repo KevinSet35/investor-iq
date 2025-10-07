@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { FlexibleMortgageInput, MortgageCalculationResult, MortgageCalculationService } from './mortgage-calculation.service';
+import { FlexibleMortgageInput, MortgageCalculationResult, MortgageCalculationResultWithMetadata, MortgageCalculationService } from './mortgage-calculation.service';
 
 @Controller('mortgage-calculation')
 export class MortgageCalculationController {
@@ -8,12 +8,12 @@ export class MortgageCalculationController {
     ) { }
 
     @Post()
-    calculateMortgage(@Body() dto: FlexibleMortgageInput): MortgageCalculationResult {
-        return this.mortgageCalculationService.calculateMortgageFlexible(dto);
+    calculateMortgage(@Body() dto: FlexibleMortgageInput): MortgageCalculationResultWithMetadata {
+        return this.mortgageCalculationService.calculateMortgageWithMetadata(dto);
     }
 
     @Post('with-schedule')
-    calculateMortgageWithSchedule(@Body() dto: FlexibleMortgageInput): MortgageCalculationResult {
-        return this.mortgageCalculationService.calculateMortgageWithScheduleFlexible(dto);
+    calculateMortgageWithSchedule(@Body() dto: FlexibleMortgageInput): MortgageCalculationResultWithMetadata {
+        return this.mortgageCalculationService.calculateMortgageWithScheduleAndMetadata(dto);
     }
 }

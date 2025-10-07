@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { RentalPropertyAnalysisService, RentalPropertyInput, RentalPropertyResult } from './rental-property-analysis.service';
+import { RentalPropertyAnalysisService, RentalPropertyInput, RentalPropertyResult, RentalPropertyResultWithMetadata } from './rental-property-analysis.service';
 
 @Controller('rental-property-analysis')
 export class RentalPropertyAnalysisController {
@@ -14,8 +14,8 @@ export class RentalPropertyAnalysisController {
     @Post()
     analyzeRentalProperty(
         @Body() input: RentalPropertyInput
-    ): RentalPropertyResult {
-        return this.rentalPropertyAnalysisService.analyzeRentalProperty(input);
+    ): RentalPropertyResultWithMetadata {
+        return this.rentalPropertyAnalysisService.analyzeRentalPropertyWithMetadata(input);
     }
 
     /**
@@ -25,7 +25,7 @@ export class RentalPropertyAnalysisController {
     @Post('with-schedule')
     analyzeRentalPropertyWithSchedule(
         @Body() input: RentalPropertyInput
-    ): RentalPropertyResult {
-        return this.rentalPropertyAnalysisService.analyzeRentalPropertyWithSchedule(input);
+    ): RentalPropertyResultWithMetadata {
+        return this.rentalPropertyAnalysisService.analyzeRentalPropertyWithScheduleAndMetadata(input);
     }
 }
