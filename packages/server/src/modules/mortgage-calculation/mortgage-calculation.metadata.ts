@@ -11,6 +11,8 @@ export interface FieldMetadata {
     unit?: string;
     /** Format hint for display (e.g., 'currency', 'percentage', 'number') */
     format?: 'currency' | 'percentage' | 'number' | 'integer' | 'ratio';
+    /** Optional string formula showing how this value is derived */
+    formula?: string;
 }
 
 /**
@@ -27,24 +29,28 @@ export class MortgageCalculationMetadata {
                 description: 'Monthly payment amount for principal and interest only (excludes taxes, insurance, PMI, and HOA)',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'P * (r * (1 + r)^n) / ((1 + r)^n - 1)', // standard loan payment formula
             },
             {
                 key: 'propertyTax',
                 description: 'Monthly property tax payment',
                 unit: 'dollars',
                 format: 'currency',
+                formula: '(propertyTaxAnnual || propertyTaxPercent * propertyPrice) / 12',
             },
             {
                 key: 'homeInsurance',
                 description: 'Monthly home insurance premium',
                 unit: 'dollars',
                 format: 'currency',
+                formula: '(homeInsuranceAnnual || homeInsurancePercent * propertyPrice) / 12',
             },
             {
                 key: 'pmi',
                 description: 'Monthly Private Mortgage Insurance (PMI) payment. Required when down payment is less than 20% of property price',
                 unit: 'dollars',
                 format: 'currency',
+                formula: '(loanAmount * pmiRate) / 12',
             },
             {
                 key: 'hoa',
@@ -57,42 +63,49 @@ export class MortgageCalculationMetadata {
                 description: 'Total monthly payment including all costs (principal & interest + taxes + insurance + PMI + HOA)',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'principalAndInterest + propertyTax + homeInsurance + pmi + hoa',
             },
             {
                 key: 'totalPayment',
                 description: 'Total amount paid over the entire loan term for principal and interest only',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'principalAndInterest * totalMonths',
             },
             {
                 key: 'totalInterest',
                 description: 'Total interest paid over the life of the loan',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'totalPayment - loanAmount',
             },
             {
                 key: 'loanAmount',
                 description: 'The actual loan amount borrowed from the lender',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'propertyPrice - downPaymentAmount',
             },
             {
                 key: 'downPaymentAmount',
                 description: 'The down payment amount in dollars',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'propertyPrice * (downPaymentPercentage / 100)',
             },
             {
                 key: 'downPaymentPercentage',
                 description: 'The down payment as a percentage of the property price. PMI is required if less than 20%',
                 unit: 'percent',
                 format: 'percentage',
+                formula: '(downPaymentAmount / propertyPrice) * 100',
             },
             {
                 key: 'loanToValue',
                 description: 'Loan-to-Value ratio representing the loan amount as a percentage of the property value',
                 unit: 'percent',
                 format: 'percentage',
+                formula: '(loanAmount / propertyPrice) * 100',
             },
         ];
     }
@@ -113,18 +126,21 @@ export class MortgageCalculationMetadata {
                 description: 'Fixed monthly principal and interest payment amount',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'P * (r * (1 + r)^n) / ((1 + r)^n - 1)',
             },
             {
                 key: 'principal',
                 description: 'Portion of this month\'s payment applied to the loan principal',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'principalAndInterest - interest',
             },
             {
                 key: 'interest',
                 description: 'Portion of this month\'s payment applied to interest',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'remainingBalance * monthlyInterestRate',
             },
             {
                 key: 'propertyTax',
@@ -155,24 +171,28 @@ export class MortgageCalculationMetadata {
                 description: 'Total payment for this month including all components',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'principalAndInterest + propertyTax + homeInsurance + pmi + hoa',
             },
             {
                 key: 'remainingBalance',
                 description: 'Remaining loan balance after this payment is applied',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'previousBalance - principal',
             },
             {
                 key: 'totalPrincipalPaid',
                 description: 'Cumulative principal paid from the start of the loan through this payment',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'Σ(principal up to current month)',
             },
             {
                 key: 'totalInterestPaid',
                 description: 'Cumulative interest paid from the start of the loan through this payment',
                 unit: 'dollars',
                 format: 'currency',
+                formula: 'Σ(interest up to current month)',
             },
         ];
     }

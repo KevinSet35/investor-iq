@@ -25,6 +25,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'cash_flow',
+                formula: 'monthlyRent',
             },
             {
                 key: 'effectiveRent',
@@ -32,6 +33,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'cash_flow',
+                formula: 'monthlyRent * (1 - vacancyRate)',
             },
             {
                 key: 'totalExpenses',
@@ -39,6 +41,8 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'cash_flow',
+                // operating (totalMonthly) + debt service (P&I + PMI [+ HOA if applicable])
+                formula: 'totalMonthly + principalAndInterest + pmi',
             },
             {
                 key: 'netOperatingIncome',
@@ -46,6 +50,8 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'cash_flow',
+                // NOI is based on operating expenses only (excludes debt service)
+                formula: 'effectiveRent - totalMonthly',
             },
             {
                 key: 'cashFlowMonthly',
@@ -53,6 +59,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'cash_flow',
+                formula: 'effectiveRent - totalMonthly - principalAndInterest - pmi',
             },
             {
                 key: 'cashFlowAnnual',
@@ -60,6 +67,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'cash_flow',
+                formula: 'cashFlowMonthly * 12',
             },
         ];
     }
@@ -75,6 +83,8 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'percent',
                 format: 'percentage',
                 category: 'metrics',
+                // Cap rate uses ANNUAL NOI over purchase price
+                formula: '((netOperatingIncome * 12) / propertyPrice) * 100',
             },
             {
                 key: 'cashOnCashReturn',
@@ -82,6 +92,8 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'percent',
                 format: 'percentage',
                 category: 'metrics',
+                // Cash invested may include DP + closing costs + initial repairs if provided
+                formula: '(cashFlowAnnual / (downPaymentAmount + closingCosts + initialRepairs)) * 100',
             },
             {
                 key: 'grossRentMultiplier',
@@ -89,6 +101,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'ratio',
                 format: 'ratio',
                 category: 'metrics',
+                formula: 'propertyPrice / (grossRent * 12)',
             },
             {
                 key: 'debtCoverageRatio',
@@ -96,6 +109,8 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'ratio',
                 format: 'ratio',
                 category: 'metrics',
+                // DSCR = NOI / Debt service (monthly basis is fine; annual cancels out)
+                formula: 'netOperatingIncome / (principalAndInterest + pmi)',
             },
             {
                 key: 'operatingExpenseRatio',
@@ -103,6 +118,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'percent',
                 format: 'percentage',
                 category: 'metrics',
+                formula: '(totalMonthly / effectiveRent) * 100',
             },
             {
                 key: 'breakEvenOccupancy',
@@ -110,6 +126,8 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'percent',
                 format: 'percentage',
                 category: 'metrics',
+                // (Operating + Debt) / Potential Gross Rent
+                formula: '((totalMonthly + principalAndInterest + pmi) / monthlyRent) * 100',
             },
         ];
     }
@@ -125,6 +143,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: 'monthlyRent * vacancyRate',
             },
             {
                 key: 'propertyManagement',
@@ -132,6 +151,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: '(managementPercent ? effectiveMonthlyRent * managementPercent : managementFlat)',
             },
             {
                 key: 'maintenance',
@@ -139,6 +159,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: '(maintenanceAnnual || (maintenancePercentOfRent * monthlyRent) || (maintenancePercentOfValue * propertyPrice)) / 12',
             },
             {
                 key: 'capex',
@@ -146,6 +167,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: '(capexAnnual || (capexPercentOfRent * monthlyRent) || (capexPercentOfValue * propertyPrice)) / 12',
             },
             {
                 key: 'utilities',
@@ -153,6 +175,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                // pass-through (already monthly)
             },
             {
                 key: 'landscaping',
@@ -160,6 +183,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                // pass-through (already monthly)
             },
             {
                 key: 'pestControl',
@@ -167,6 +191,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                // pass-through (already monthly)
             },
             {
                 key: 'legalFees',
@@ -174,6 +199,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: '(legalFeesAnnual || legalFeesMonthly * 12) / 12',
             },
             {
                 key: 'landlordInsurance',
@@ -181,6 +207,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: 'landlordInsuranceAnnual / 12',
             },
             {
                 key: 'specialAssessments',
@@ -188,6 +215,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: 'specialAssessmentsAnnual / 12',
             },
             {
                 key: 'advertising',
@@ -195,6 +223,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: 'advertisingAnnual / 12',
             },
             {
                 key: 'turnover',
@@ -202,6 +231,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: 'turnoverAnnual / 12',
             },
             {
                 key: 'totalMonthly',
@@ -209,6 +239,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'expenses',
+                formula: 'vacancy + propertyManagement + maintenance + capex + utilities + landscaping + pestControl + legalFees + landlordInsurance + specialAssessments + advertising + turnover',
             },
         ];
     }
@@ -224,6 +255,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'income',
+                // input / passthrough
             },
             {
                 key: 'effectiveMonthlyRent',
@@ -231,6 +263,7 @@ export class RentalPropertyAnalysisMetadata {
                 unit: 'dollars',
                 format: 'currency',
                 category: 'income',
+                formula: 'monthlyRent - vacancy',
             },
         ];
     }
@@ -246,5 +279,4 @@ export class RentalPropertyAnalysisMetadata {
             operatingExpenses: this.getOperatingExpensesMetadata(),
         };
     }
-
 }

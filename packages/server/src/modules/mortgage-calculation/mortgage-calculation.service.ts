@@ -5,11 +5,10 @@ import { MortgageCalculationMetadata, FieldMetadata } from './mortgage-calculati
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
 const MONTHS_PER_YEAR = 12;
 const PERCENT_TO_DECIMAL = 100;
 const DEFAULT_PMI_RATE = 0.0075; // 0.75% annually
-const PMI_THRESHOLD_LTV = 80; // PMI required when LTV > 80%
+const PMI_THRESHOLD_LTV = 80;     // PMI required when current LTV > 80%
 const MINIMUM_DOWN_PAYMENT_FOR_NO_PMI = 20; // 20% down payment
 const DEFAULT_PROPERTY_TAX_RATE = 1.2; // 1.2% annually
 const DEFAULT_HOME_INSURANCE_ANNUAL = 1200; // $1200 annually
@@ -17,7 +16,6 @@ const DEFAULT_HOME_INSURANCE_ANNUAL = 1200; // $1200 annually
 // ============================================================================
 // INTERFACES
 // ============================================================================
-
 export interface MortgageCalculationInput {
     loanAmount: number;
     annualInterestRate: number;
@@ -33,36 +31,28 @@ export interface MortgageCalculationInput {
 
 export interface FlexibleMortgageInput {
     propertyPrice: number;
+
+    // specify loan by absolute or percent (choose one)
     loanAmount?: number;
     loanAmountPercent?: number;
+
+    // specify down payment by absolute or percent (choose one)
     downPayment?: number;
     downPaymentPercent?: number;
+
     annualInterestRate: number;
     loanTermYears: number;
+
+    // taxes/insurance either absolute annual or percent of price (choose one in each pair)
     propertyTaxAnnual?: number;
     propertyTaxPercent?: number;
+
     homeInsuranceAnnual?: number;
     homeInsurancePercent?: number;
-    hoaMonthly?: number;
-    pmiMonthly?: number;
-    autoCalculatePMI?: boolean;
-}
 
-export interface MortgageCalculationResult {
-    principalAndInterest: number;
-    propertyTax: number;
-    homeInsurance: number;
-    pmi: number;
-    hoa: number;
-    totalMonthlyPayment: number;
-    totalPayment: number;
-    totalInterest: number;
-    loanAmount: number;
-    downPaymentAmount: number;
-    downPaymentPercentage: number;
-    loanToValue: number;
-    breakdown: PaymentBreakdown;
-    amortizationSchedule?: AmortizationEntry[];
+    hoaMonthly?: number;
+    pmiMonthly?: number;       // override calculated PMI if provided
+    autoCalculatePMI?: boolean; // default true
 }
 
 export interface PaymentBreakdown {
@@ -89,6 +79,33 @@ export interface AmortizationEntry {
     totalInterestPaid: number;
 }
 
+export interface MortgageCalculationResult {
+    principalAndInterest: number; // monthly P&I
+    propertyTax: number;          // monthly tax
+    homeInsurance: number;        // monthly insurance
+    pmi: number;                  // monthly PMI (may be 0)
+    hoa: number;                  // monthly HOA
+    totalMonthlyPayment: number;  // full monthly payment (P&I + tax + ins + pmi + hoa)
+
+    totalPayment: number;         // total P&I over life of loan
+    totalInterest: number;        // total interest over life of loan
+
+    loanAmount: number;
+    downPaymentAmount: number;
+    downPaymentPercentage: number;
+    loanToValue: number;          // initial LTV (%)
+
+    breakdown: PaymentBreakdown;
+    amortizationSchedule?: AmortizationEntry[];
+}
+
+/** Result wrapper including metadata for UI display */
+export interface MortgageCalculationResultWithMetadata {
+    data: MortgageCalculationResult;
+    metadata: FieldMetadata[];
+    amortizationMetadata?: FieldMetadata[];
+}
+
 interface ValidationResult {
     valid: boolean;
     errors: string[];
@@ -101,89 +118,47 @@ interface AffordabilityResult {
     estimatedMonthlyPayment: number;
 }
 
-/**
- * Enhanced mortgage calculation result with field descriptions
- */
-export interface MortgageCalculationResultWithMetadata {
-    /** The actual calculation results */
-    data: MortgageCalculationResult;
-    /** Metadata describing each field in the result */
-    metadata: FieldMetadata[];
-    /** Metadata describing amortization schedule fields */
-    amortizationMetadata?: FieldMetadata[];
-}
-
 // ============================================================================
 // SERVICE
 // ============================================================================
-
 @Injectable()
 export class MortgageCalculationService {
-
-    /**
-     * Get metadata descriptions for all mortgage calculation result fields
-     */
+    // -------- Metadata passthrough --------
     getResultMetadata(): FieldMetadata[] {
         return MortgageCalculationMetadata.getResultMetadata();
     }
-
-    /**
-     * Get metadata for amortization schedule fields
-     */
     getAmortizationMetadata(): FieldMetadata[] {
         return MortgageCalculationMetadata.getAmortizationMetadata();
     }
 
-    /**
-     * Calculate mortgage and return with metadata
-     */
+    // -------- Metadata-returning calculators --------
     calculateMortgageWithMetadata(input: FlexibleMortgageInput): MortgageCalculationResultWithMetadata {
         const data = this.calculateMortgageFlexible(input);
         const metadata = this.getResultMetadata();
-
-        return {
-            data,
-            metadata,
-        };
+        return { data, metadata };
     }
 
-    /**
-     * Calculate mortgage with schedule and return with metadata
-     */
     calculateMortgageWithScheduleAndMetadata(input: FlexibleMortgageInput): MortgageCalculationResultWithMetadata {
         const data = this.calculateMortgageWithScheduleFlexible(input);
         const metadata = this.getResultMetadata();
         const amortizationMetadata = this.getAmortizationMetadata();
-
-        return {
-            data,
-            metadata,
-            amortizationMetadata,
-        };
+        return { data, metadata, amortizationMetadata };
     }
 
-    /**
-     * Calculate mortgage with flexible input format
-     * Supports both absolute values and percentages
-     */
+    // -------- Flexible calculators (used by rental analysis) --------
     calculateMortgageFlexible(input: FlexibleMortgageInput): MortgageCalculationResult {
         this.validateFlexibleInput(input);
-        const normalizedInput = this.normalizeInput(input);
-        return this.calculateMortgage(normalizedInput);
+        const normalized = this.normalizeInput(input);
+        return this.calculateMortgage(normalized);
     }
 
-    /**
-     * Calculate mortgage with amortization schedule using flexible input
-     */
     calculateMortgageWithScheduleFlexible(input: FlexibleMortgageInput): MortgageCalculationResult {
         this.validateFlexibleInput(input);
-        const normalizedInput = this.normalizeInput(input);
-        return this.calculateMortgageWithSchedule(normalizedInput);
+        const normalized = this.normalizeInput(input);
+        return this.calculateMortgageWithSchedule(normalized);
     }
 
-    /**
-     * Calculate maximum affordable property price based on monthly budget
-     */
+    // -------- Affordability --------
     calculateAffordableProperty(
         maxMonthlyPayment: number,
         annualInterestRate: number,
@@ -191,40 +166,32 @@ export class MortgageCalculationService {
         downPaymentPercentage: number,
         propertyTaxRate: number = DEFAULT_PROPERTY_TAX_RATE,
         homeInsuranceAnnual: number = DEFAULT_HOME_INSURANCE_ANNUAL,
-        hoaMonthly: number = 0,
+        hoaMonthly: number = 0
     ): AffordabilityResult {
-        this.validateAffordabilityInput(
-            maxMonthlyPayment,
-            annualInterestRate,
-            loanTermYears,
-            downPaymentPercentage,
-        );
+        this.validateAffordabilityInput(maxMonthlyPayment, annualInterestRate, loanTermYears, downPaymentPercentage);
 
         const monthlyRate = this.calculateMonthlyRate(annualInterestRate);
-        const numberOfPayments = this.calculateTotalPayments(loanTermYears);
-        const downPaymentDecimal = downPaymentPercentage / PERCENT_TO_DECIMAL;
+        const n = this.calculateTotalPayments(loanTermYears);
+        const downPct = downPaymentPercentage / PERCENT_TO_DECIMAL;
 
-        const pmiRate = this.shouldCalculatePMI(downPaymentPercentage)
-            ? DEFAULT_PMI_RATE / MONTHS_PER_YEAR
-            : 0;
+        const pmiRateMonthly = downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI ? (DEFAULT_PMI_RATE / MONTHS_PER_YEAR) : 0;
 
         const monthlyInsurance = homeInsuranceAnnual / MONTHS_PER_YEAR;
         const availableForPIAndTax = maxMonthlyPayment - monthlyInsurance - hoaMonthly;
 
-        const taxFactor = propertyTaxRate / PERCENT_TO_DECIMAL / MONTHS_PER_YEAR;
-        const loanFactor = 1 - downPaymentDecimal;
-        const mortgagePaymentRate = this.calculateMortgagePaymentRate(monthlyRate, numberOfPayments);
+        const taxFactor = (propertyTaxRate / PERCENT_TO_DECIMAL) / MONTHS_PER_YEAR;
+        const loanFactor = 1 - downPct;
+        const mortgagePaymentRate = this.calculateMortgagePaymentRate(monthlyRate, n);
 
-        const propertyPriceFactor = taxFactor + loanFactor * (mortgagePaymentRate + pmiRate);
+        const propertyPriceFactor = taxFactor + loanFactor * (mortgagePaymentRate + pmiRateMonthly);
         const maxPropertyPrice = availableForPIAndTax / propertyPriceFactor;
-        const downPayment = maxPropertyPrice * downPaymentDecimal;
+
+        const downPayment = maxPropertyPrice * downPct;
         const maxLoanAmount = maxPropertyPrice - downPayment;
 
         const monthlyPI = maxLoanAmount * mortgagePaymentRate;
-        const monthlyTax = (maxPropertyPrice * propertyTaxRate) / PERCENT_TO_DECIMAL / MONTHS_PER_YEAR;
-        const monthlyPMI = this.shouldCalculatePMI(downPaymentPercentage)
-            ? maxLoanAmount * pmiRate
-            : 0;
+        const monthlyTax = maxPropertyPrice * taxFactor * MONTHS_PER_YEAR;
+        const monthlyPMI = downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI ? maxLoanAmount * pmiRateMonthly : 0;
         const estimatedMonthlyPayment = monthlyPI + monthlyTax + monthlyInsurance + monthlyPMI + hoaMonthly;
 
         return {
@@ -236,60 +203,41 @@ export class MortgageCalculationService {
     }
 
     // ============================================================================
-    // PRIVATE VALIDATION METHODS
+    // VALIDATION
     // ============================================================================
-
     private validateFlexibleInput(input: FlexibleMortgageInput): void {
-        const validation = this.validateInput(input);
-        if (!validation.valid) {
-            throw new Error(`Invalid mortgage input: ${validation.errors.join(', ')}`);
-        }
+        const { valid, errors } = this.validateInput(input);
+        if (!valid) throw new Error(`Invalid mortgage input: ${errors.join(', ')}`);
     }
 
     private validateInput(input: FlexibleMortgageInput): ValidationResult {
         const errors: string[] = [];
 
-        if (!input.propertyPrice || input.propertyPrice <= 0) {
-            errors.push('propertyPrice is required and must be greater than 0');
-        }
-
-        if (input.loanAmount !== undefined && input.loanAmountPercent !== undefined) {
+        if (!input.propertyPrice || input.propertyPrice <= 0) errors.push('propertyPrice is required and must be greater than 0');
+        if (input.loanAmount !== undefined && input.loanAmountPercent !== undefined)
             errors.push('Cannot specify both loanAmount and loanAmountPercent');
-        }
-
-        if (input.downPayment !== undefined && input.downPaymentPercent !== undefined) {
+        if (input.downPayment !== undefined && input.downPaymentPercent !== undefined)
             errors.push('Cannot specify both downPayment and downPaymentPercent');
-        }
-
-        if (input.propertyTaxAnnual !== undefined && input.propertyTaxPercent !== undefined) {
+        if (input.propertyTaxAnnual !== undefined && input.propertyTaxPercent !== undefined)
             errors.push('Cannot specify both propertyTaxAnnual and propertyTaxPercent');
-        }
-
-        if (input.homeInsuranceAnnual !== undefined && input.homeInsurancePercent !== undefined) {
+        if (input.homeInsuranceAnnual !== undefined && input.homeInsurancePercent !== undefined)
             errors.push('Cannot specify both homeInsuranceAnnual and homeInsurancePercent');
-        }
 
         this.validatePercentageRanges(input, errors);
 
-        return {
-            valid: errors.length === 0,
-            errors,
-        };
+        return { valid: errors.length === 0, errors };
     }
 
     private validatePercentageRanges(input: FlexibleMortgageInput, errors: string[]): void {
         if (input.loanAmountPercent !== undefined && !NumberUtils.isValidPercentage(input.loanAmountPercent)) {
             errors.push('loanAmountPercent must be between 0 and 100');
         }
-
         if (input.downPaymentPercent !== undefined && !NumberUtils.isValidPercentage(input.downPaymentPercent)) {
             errors.push('downPaymentPercent must be between 0 and 100');
         }
-
         if (input.propertyTaxPercent !== undefined && input.propertyTaxPercent < 0) {
             errors.push('propertyTaxPercent must be non-negative');
         }
-
         if (input.homeInsurancePercent !== undefined && input.homeInsurancePercent < 0) {
             errors.push('homeInsurancePercent must be non-negative');
         }
@@ -299,55 +247,34 @@ export class MortgageCalculationService {
         maxMonthlyPayment: number,
         annualInterestRate: number,
         loanTermYears: number,
-        downPaymentPercentage: number,
+        downPaymentPercentage: number
     ): void {
-        if (maxMonthlyPayment <= 0) {
-            throw new Error('maxMonthlyPayment must be greater than 0');
-        }
-        if (annualInterestRate < 0) {
-            throw new Error('annualInterestRate must be non-negative');
-        }
-        if (loanTermYears <= 0) {
-            throw new Error('loanTermYears must be greater than 0');
-        }
-        if (!NumberUtils.isValidPercentage(downPaymentPercentage)) {
-            throw new Error('downPaymentPercentage must be between 0 and 100');
-        }
+        if (maxMonthlyPayment <= 0) throw new Error('maxMonthlyPayment must be greater than 0');
+        if (annualInterestRate < 0) throw new Error('annualInterestRate must be non-negative');
+        if (loanTermYears <= 0) throw new Error('loanTermYears must be greater than 0');
+        if (!NumberUtils.isValidPercentage(downPaymentPercentage)) throw new Error('downPaymentPercentage must be between 0 and 100');
     }
 
     // ============================================================================
-    // PRIVATE CALCULATION METHODS
+    // CORE CALCULATIONS
     // ============================================================================
-
     private calculateMortgage(input: MortgageCalculationInput): MortgageCalculationResult {
         const loanDetails = this.calculateLoanDetails(input);
         const monthlyRate = this.calculateMonthlyRate(input.annualInterestRate);
-        const numberOfPayments = this.calculateTotalPayments(input.loanTermYears);
+        const n = this.calculateTotalPayments(input.loanTermYears);
 
-        const principalAndInterest = this.calculatePrincipalAndInterest(
-            loanDetails.loanAmount,
-            monthlyRate,
-            numberOfPayments,
-        );
+        const principalAndInterest = this.calculatePrincipalAndInterest(loanDetails.loanAmount, monthlyRate, n);
 
         const monthlyPropertyTax = (input.propertyTaxAnnual || 0) / MONTHS_PER_YEAR;
         const monthlyHomeInsurance = (input.homeInsuranceAnnual || 0) / MONTHS_PER_YEAR;
-        const monthlyPMI = this.calculateMonthlyPMI(
-            input,
-            loanDetails.loanAmount,
-            loanDetails.downPaymentPercentage,
-        );
+        const monthlyPMI = this.calculateMonthlyPMI(input, loanDetails.loanAmount, loanDetails.downPaymentPercentage);
         const monthlyHOA = input.hoaMonthly || 0;
 
         const totalMonthlyPayment = this.calculateTotalMonthlyPayment(
-            principalAndInterest,
-            monthlyPropertyTax,
-            monthlyHomeInsurance,
-            monthlyPMI,
-            monthlyHOA,
+            principalAndInterest, monthlyPropertyTax, monthlyHomeInsurance, monthlyPMI, monthlyHOA
         );
 
-        const totalPayment = principalAndInterest * numberOfPayments;
+        const totalPayment = principalAndInterest * n;
         const totalInterest = totalPayment - loanDetails.loanAmount;
 
         return {
@@ -359,17 +286,19 @@ export class MortgageCalculationService {
             totalMonthlyPayment: NumberUtils.roundToTwo(totalMonthlyPayment),
             totalPayment: NumberUtils.roundToTwo(totalPayment),
             totalInterest: NumberUtils.roundToTwo(totalInterest),
+
             loanAmount: loanDetails.loanAmount,
             downPaymentAmount: loanDetails.downPaymentAmount,
             downPaymentPercentage: NumberUtils.roundToTwo(loanDetails.downPaymentPercentage),
             loanToValue: NumberUtils.roundToTwo(loanDetails.loanToValue),
+
             breakdown: this.createPaymentBreakdown(
                 principalAndInterest,
                 monthlyPropertyTax,
                 monthlyHomeInsurance,
                 monthlyPMI,
                 monthlyHOA,
-                totalMonthlyPayment,
+                totalMonthlyPayment
             ),
         };
     }
@@ -377,21 +306,14 @@ export class MortgageCalculationService {
     private calculateMortgageWithSchedule(input: MortgageCalculationInput): MortgageCalculationResult {
         const result = this.calculateMortgage(input);
         const monthlyRate = this.calculateMonthlyRate(input.annualInterestRate);
-        const numberOfPayments = this.calculateTotalPayments(input.loanTermYears);
+        const n = this.calculateTotalPayments(input.loanTermYears);
 
-        const amortizationSchedule = this.buildAmortizationSchedule(
-            result.loanAmount,
-            monthlyRate,
-            numberOfPayments,
-            result,
-        );
+        const amortizationSchedule = this.buildAmortizationSchedule(result.loanAmount, monthlyRate, n, result);
 
-        return {
-            ...result,
-            amortizationSchedule,
-        };
+        return { ...result, amortizationSchedule };
     }
 
+    // Loan detail derivation from price + down payment or direct loan amount
     private calculateLoanDetails(input: MortgageCalculationInput) {
         const { loanAmount: inputLoanAmount, downPayment = 0, propertyPrice } = input;
 
@@ -399,125 +321,87 @@ export class MortgageCalculationService {
         const downPaymentAmount = propertyPrice ? downPayment : 0;
         const actualPropertyPrice = propertyPrice || loanAmount;
 
-        const downPaymentPercentage = propertyPrice
-            ? (downPayment / propertyPrice) * PERCENT_TO_DECIMAL
-            : 0;
+        const downPaymentPercentage = propertyPrice ? (downPayment / propertyPrice) * PERCENT_TO_DECIMAL : 0;
         const loanToValue = (loanAmount / actualPropertyPrice) * PERCENT_TO_DECIMAL;
 
-        return {
-            loanAmount,
-            downPaymentAmount,
-            downPaymentPercentage,
-            loanToValue,
-        };
+        return { loanAmount, downPaymentAmount, downPaymentPercentage, loanToValue };
     }
 
-    private calculatePrincipalAndInterest(
-        loanAmount: number,
-        monthlyRate: number,
-        numberOfPayments: number,
-    ): number {
-        if (monthlyRate === 0) {
-            return loanAmount / numberOfPayments;
-        }
-
-        const rateMultiplier = Math.pow(1 + monthlyRate, numberOfPayments);
-        return (loanAmount * (monthlyRate * rateMultiplier)) / (rateMultiplier - 1);
+    private calculatePrincipalAndInterest(loanAmount: number, monthlyRate: number, n: number): number {
+        if (monthlyRate === 0) return loanAmount / n;
+        const factor = Math.pow(1 + monthlyRate, n);
+        return (loanAmount * monthlyRate * factor) / (factor - 1);
     }
 
-    private calculateMonthlyPMI(
-        input: MortgageCalculationInput,
-        loanAmount: number,
-        downPaymentPercentage: number,
-    ): number {
-        if (input.pmiMonthly) {
-            return input.pmiMonthly;
-        }
+    private calculateMonthlyPMI(input: MortgageCalculationInput, loanAmount: number, downPaymentPercentage: number): number {
+        if (input.pmiMonthly) return input.pmiMonthly;
 
         const shouldAutoCalculate = input.autoCalculatePMI ?? true;
         if (shouldAutoCalculate && this.shouldCalculatePMI(downPaymentPercentage)) {
             return (loanAmount * DEFAULT_PMI_RATE) / MONTHS_PER_YEAR;
         }
-
         return 0;
     }
 
-    private calculateTotalMonthlyPayment(
-        principalAndInterest: number,
-        propertyTax: number,
-        homeInsurance: number,
-        pmi: number,
-        hoa: number,
-    ): number {
-        return principalAndInterest + propertyTax + homeInsurance + pmi + hoa;
+    private calculateTotalMonthlyPayment(pi: number, tax: number, ins: number, pmi: number, hoa: number): number {
+        return pi + tax + ins + pmi + hoa;
     }
 
     private buildAmortizationSchedule(
         loanAmount: number,
         monthlyRate: number,
-        numberOfPayments: number,
-        result: MortgageCalculationResult,
+        n: number,
+        base: MortgageCalculationResult
     ): AmortizationEntry[] {
         const schedule: AmortizationEntry[] = [];
         let remainingBalance = loanAmount;
         let totalPrincipalPaid = 0;
         let totalInterestPaid = 0;
 
-        for (let month = 1; month <= numberOfPayments; month++) {
+        for (let month = 1; month <= n; month++) {
             const interestPayment = remainingBalance * monthlyRate;
-            const principalPayment = result.principalAndInterest - interestPayment;
+            const principalPayment = base.principalAndInterest - interestPayment;
             remainingBalance = Math.max(0, remainingBalance - principalPayment);
 
             totalPrincipalPaid += principalPayment;
             totalInterestPaid += interestPayment;
 
+            // Month-by-month PMI drop when current LTV dips below threshold and initial down payment was < 20%
             const currentLTV = (remainingBalance / loanAmount) * PERCENT_TO_DECIMAL;
-            const pmiThisMonth = this.calculatePMIForMonth(
-                currentLTV,
-                result.downPaymentPercentage,
-                result.pmi,
-            );
+            const pmiThisMonth = this.calculatePMIForMonth(currentLTV, base.downPaymentPercentage, base.pmi);
 
             const totalPaymentThisMonth = this.calculateTotalMonthlyPayment(
-                result.principalAndInterest,
-                result.propertyTax,
-                result.homeInsurance,
-                pmiThisMonth,
-                result.hoa,
+                base.principalAndInterest, base.propertyTax, base.homeInsurance, pmiThisMonth, base.hoa
             );
 
             schedule.push({
                 month,
-                principalAndInterest: NumberUtils.roundToTwo(result.principalAndInterest),
+                principalAndInterest: NumberUtils.roundToTwo(base.principalAndInterest),
                 principal: NumberUtils.roundToTwo(principalPayment),
                 interest: NumberUtils.roundToTwo(interestPayment),
-                propertyTax: result.propertyTax,
-                homeInsurance: result.homeInsurance,
+                propertyTax: base.propertyTax,
+                homeInsurance: base.homeInsurance,
                 pmi: NumberUtils.roundToTwo(pmiThisMonth),
-                hoa: result.hoa,
+                hoa: base.hoa,
                 totalPayment: NumberUtils.roundToTwo(totalPaymentThisMonth),
                 remainingBalance: NumberUtils.roundToTwo(remainingBalance),
                 totalPrincipalPaid: NumberUtils.roundToTwo(totalPrincipalPaid),
                 totalInterestPaid: NumberUtils.roundToTwo(totalInterestPaid),
             });
         }
-
         return schedule;
     }
 
-    private calculatePMIForMonth(
-        currentLTV: number,
-        downPaymentPercentage: number,
-        basePMI: number,
-    ): number {
-        const requiresPMI = currentLTV > PMI_THRESHOLD_LTV &&
-            downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI;
+    private calculatePMIForMonth(currentLTV: number, downPaymentPercentage: number, basePMI: number): number {
+        const requiresPMI = currentLTV > PMI_THRESHOLD_LTV && downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI;
         return requiresPMI ? basePMI : 0;
     }
 
+    // ============================================================================
+    // NORMALIZATION
+    // ============================================================================
     private normalizeInput(input: FlexibleMortgageInput): MortgageCalculationInput {
         const { propertyPrice } = input;
-
         return {
             loanAmount: this.calculateNormalizedLoanAmount(input, propertyPrice),
             annualInterestRate: input.annualInterestRate,
@@ -533,56 +417,39 @@ export class MortgageCalculationService {
     }
 
     private calculateNormalizedLoanAmount(input: FlexibleMortgageInput, propertyPrice: number): number {
-        if (input.loanAmount !== undefined) {
-            return input.loanAmount;
-        }
-        if (input.loanAmountPercent !== undefined) {
-            return (propertyPrice * input.loanAmountPercent) / PERCENT_TO_DECIMAL;
-        }
+        if (input.loanAmount !== undefined) return input.loanAmount;
+        if (input.loanAmountPercent !== undefined) return (propertyPrice * input.loanAmountPercent) / PERCENT_TO_DECIMAL;
         return 0;
     }
 
     private calculateNormalizedDownPayment(input: FlexibleMortgageInput, propertyPrice: number): number {
-        if (input.downPayment !== undefined) {
-            return input.downPayment;
-        }
-        if (input.downPaymentPercent !== undefined) {
-            return (propertyPrice * input.downPaymentPercent) / PERCENT_TO_DECIMAL;
-        }
+        if (input.downPayment !== undefined) return input.downPayment;
+        if (input.downPaymentPercent !== undefined) return (propertyPrice * input.downPaymentPercent) / PERCENT_TO_DECIMAL;
         return 0;
     }
 
     private calculateNormalizedPropertyTax(input: FlexibleMortgageInput, propertyPrice: number): number {
-        if (input.propertyTaxAnnual !== undefined) {
-            return input.propertyTaxAnnual;
-        }
-        if (input.propertyTaxPercent !== undefined) {
-            return (propertyPrice * input.propertyTaxPercent) / PERCENT_TO_DECIMAL;
-        }
+        if (input.propertyTaxAnnual !== undefined) return input.propertyTaxAnnual;
+        if (input.propertyTaxPercent !== undefined) return (propertyPrice * input.propertyTaxPercent) / PERCENT_TO_DECIMAL;
         return 0;
     }
 
     private calculateNormalizedHomeInsurance(input: FlexibleMortgageInput, propertyPrice: number): number {
-        if (input.homeInsuranceAnnual !== undefined) {
-            return input.homeInsuranceAnnual;
-        }
-        if (input.homeInsurancePercent !== undefined) {
-            return (propertyPrice * input.homeInsurancePercent) / PERCENT_TO_DECIMAL;
-        }
+        if (input.homeInsuranceAnnual !== undefined) return input.homeInsuranceAnnual;
+        if (input.homeInsurancePercent !== undefined) return (propertyPrice * input.homeInsurancePercent) / PERCENT_TO_DECIMAL;
         return 0;
     }
 
     // ============================================================================
-    // UTILITY METHODS
+    // UTILS
     // ============================================================================
-
     private createPaymentBreakdown(
         principalAndInterest: number,
         propertyTax: number,
         homeInsurance: number,
         pmi: number,
         hoa: number,
-        total: number,
+        total: number
     ): PaymentBreakdown {
         return {
             principalAndInterest: NumberUtils.roundToTwo(principalAndInterest),
@@ -602,16 +469,13 @@ export class MortgageCalculationService {
         return loanTermYears * MONTHS_PER_YEAR;
     }
 
-    private calculateMortgagePaymentRate(monthlyRate: number, numberOfPayments: number): number {
-        if (monthlyRate === 0) {
-            return 1 / numberOfPayments;
-        }
-        const rateMultiplier = Math.pow(1 + monthlyRate, numberOfPayments);
-        return (monthlyRate * rateMultiplier) / (rateMultiplier - 1);
+    private calculateMortgagePaymentRate(monthlyRate: number, n: number): number {
+        if (monthlyRate === 0) return 1 / n;
+        const factor = Math.pow(1 + monthlyRate, n);
+        return (monthlyRate * factor) / (factor - 1);
     }
 
     private shouldCalculatePMI(downPaymentPercentage: number): boolean {
         return downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI && downPaymentPercentage > 0;
     }
-
 }
