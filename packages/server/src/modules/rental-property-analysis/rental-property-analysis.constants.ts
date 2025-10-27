@@ -12,3 +12,5 @@ export const DEFAULT_CAPITAL_GAINS_TAX_RATE = 15; // 15% long-term capital gains
 export const DEFAULT_DEPRECIATION_YEARS = 27.5; // Residential property depreciation period
 export const DEFAULT_COST_SEGREGATION_PERCENTAGE = 20; // 20% of property value can be accelerated
 export const DEFAULT_PROFIT_MARGIN = 70; // 70% profit margin for maximum allowable offer
+export const DEFAULT_SELLING_COST_RATE = 0.08; // 8% of property value for selling costs
+export const SENSITIVITY_ANALYSIS_SCENARIOS = [-10, -5, 0, 5, 10] as const; // Percentage changes for sensitivity analysis

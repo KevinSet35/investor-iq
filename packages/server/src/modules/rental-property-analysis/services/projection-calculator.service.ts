@@ -17,6 +17,8 @@ import {
     DEFAULT_APPRECIATION_RATE,
     DEFAULT_RENT_GROWTH_RATE,
     DEFAULT_EXPENSE_GROWTH_RATE,
+    DEFAULT_SELLING_COST_RATE,
+    SENSITIVITY_ANALYSIS_SCENARIOS,
 } from '../rental-property-analysis.constants';
 import { MortgageCalculationResult } from '@/modules/mortgage-calculation/mortgage-calculation.interfaces';
 
@@ -34,7 +36,7 @@ export class ProjectionCalculator {
         let exitAnalysis: ExitAnalysis | undefined;
         if (input.holdingPeriodYears) {
             const projection = this.projectReturns(input, initialResult, input.holdingPeriodYears);
-            const sellingCosts = projection.propertyValue * 0.08;
+            const sellingCosts = projection.propertyValue * DEFAULT_SELLING_COST_RATE;
             const netProceeds = projection.propertyValue - sellingCosts - projection.loanBalance;
             const totalCashFlow = projection.cumulativeCashFlow;
             const totalReturn = netProceeds + totalCashFlow - initialResult.downPaymentAmount;
@@ -103,11 +105,10 @@ export class ProjectionCalculator {
         baseResult: RentalPropertyResult,
         analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityAnalysis {
-        const scenarios = [-10, -5, 0, 5, 10];
-        const vacancyImpact = this.calculateVacancyScenarios(input, scenarios, analyzeRentalPropertyFn);
-        const rentChangeImpact = this.calculateRentScenarios(input, scenarios, analyzeRentalPropertyFn);
-        const interestRateImpact = this.calculateInterestRateScenarios(input, scenarios, analyzeRentalPropertyFn);
-        const expenseChangeImpact = this.calculateExpenseScenarios(input, scenarios, analyzeRentalPropertyFn);
+        const vacancyImpact = this.calculateVacancyScenarios(input, SENSITIVITY_ANALYSIS_SCENARIOS, analyzeRentalPropertyFn);
+        const rentChangeImpact = this.calculateRentScenarios(input, SENSITIVITY_ANALYSIS_SCENARIOS, analyzeRentalPropertyFn);
+        const interestRateImpact = this.calculateInterestRateScenarios(input, SENSITIVITY_ANALYSIS_SCENARIOS, analyzeRentalPropertyFn);
+        const expenseChangeImpact = this.calculateExpenseScenarios(input, SENSITIVITY_ANALYSIS_SCENARIOS, analyzeRentalPropertyFn);
         return { vacancyImpact, rentChangeImpact, interestRateImpact, expenseChangeImpact };
     }
 
@@ -154,7 +155,7 @@ export class ProjectionCalculator {
 
     private calculateVacancyScenarios(
         input: RentalPropertyInput,
-        scenarios: number[],
+        scenarios: readonly number[],  // Changed from number[]
         analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
         return scenarios.map((change) => {
@@ -177,7 +178,7 @@ export class ProjectionCalculator {
 
     private calculateRentScenarios(
         input: RentalPropertyInput,
-        scenarios: number[],
+        scenarios: readonly number[],
         analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
         return scenarios.map((change) => {
@@ -197,7 +198,7 @@ export class ProjectionCalculator {
 
     private calculateInterestRateScenarios(
         input: RentalPropertyInput,
-        scenarios: number[],
+        scenarios: readonly number[],
         analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
         return scenarios.map((change) => {
@@ -218,7 +219,7 @@ export class ProjectionCalculator {
 
     private calculateExpenseScenarios(
         input: RentalPropertyInput,
-        scenarios: number[],
+        scenarios: readonly number[],
         analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
         return scenarios.map((change) => {
