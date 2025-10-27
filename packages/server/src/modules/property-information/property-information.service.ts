@@ -44,17 +44,13 @@ export class PropertyInformationService {
         }
 
         // Features validation
-        if (
+        return !(
             property.features.bedrooms <= 0 ||
             property.features.fullBathrooms < 0 ||
             property.features.halfBathrooms < 0 ||
             property.features.fullBathrooms + property.features.halfBathrooms === 0 ||
             property.features.squareFeet <= 0
-        ) {
-            return false;
-        }
-
-        return true;
+        );
     }
 
     // calculatePricePerSquareFoot(price: number, property: PropertyInformation): number {

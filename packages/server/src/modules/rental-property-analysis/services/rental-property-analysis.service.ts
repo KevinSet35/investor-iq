@@ -27,6 +27,10 @@ import {
     MaximumAllowableOfferInput,
     WholesaleProfitInput,
     WholesaleProfitResult,
+    MaximumAllowableOfferResult,
+    CommercialNOIInput,
+    PrivateLendingResult,
+    LandDevelopmentResult,
 } from '../rental-property-analysis.interfaces';
 import { PERCENT_TO_DECIMAL, DEFAULT_VACANCY_RATE, DEFAULT_PROFIT_MARGIN } from '../rental-property-analysis.constants';
 import { ExpenseCalculator } from './expense-calculator.service';
@@ -70,7 +74,7 @@ export class RentalPropertyAnalysisService {
 
     calculateMaximumAllowableOffer(
         input: MaximumAllowableOfferInput
-    ): { mao: number; potentialProfit: number; roi: number } {
+    ): MaximumAllowableOfferResult {
         return this.strategyAnalyzer.calculateMaximumAllowableOffer(
             input.afterRepairValue,
             input.repairCosts,
@@ -125,14 +129,7 @@ export class RentalPropertyAnalysisService {
 
     // ---------------- Commercial / Value-Add ----------------
 
-    calculateCommercialNOI(input: {
-        grossScheduledIncome: number;
-        vacancyLoss: number;
-        otherIncome: number;
-        operatingExpenses: number;
-        managementFees: number;
-        reserves: number;
-    }): number {
+    calculateCommercialNOI(input: CommercialNOIInput): number {
         return this.strategyAnalyzer.calculateCommercialNOI(input);
     }
 
@@ -158,7 +155,7 @@ export class RentalPropertyAnalysisService {
         termMonths: number;
         points: number;
         servicingFeeMonthly?: number;
-    }): { monthlyIncome: number; totalReturn: number; annualizedYield: number; totalPoints: number } {
+    }): PrivateLendingResult {
         return this.strategyAnalyzer.calculatePrivateLendingReturns(input);
     }
 
@@ -172,15 +169,7 @@ export class RentalPropertyAnalysisService {
         numberOfLots: number;
         averageLotPrice: number;
         developmentTimeMonths: number;
-    }): {
-        totalCosts: number;
-        grossRevenue: number;
-        netProfit: number;
-        profitMargin: number;
-        profitPerLot: number;
-        roi: number;
-        annualizedROI: number;
-    } {
+    }): LandDevelopmentResult{
         return this.strategyAnalyzer.calculateLandDevelopment(input);
     }
 

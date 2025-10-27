@@ -20,6 +20,8 @@ import {
     ComparativeAnalysisInput,
     ComparativeAnalysisResult,
     RentalPropertyResult,
+    PrivateLendingResult,
+    LandDevelopmentResult,
 } from '../rental-property-analysis.interfaces';
 import { MONTHS_PER_YEAR } from '../rental-property-analysis.constants';
 
@@ -267,7 +269,7 @@ export class StrategyAnalyzer {
         termMonths: number;
         points: number;
         servicingFeeMonthly?: number;
-    }): { monthlyIncome: number; totalReturn: number; annualizedYield: number; totalPoints: number } {
+    }): PrivateLendingResult {
         const totalPoints = input.loanAmount * (input.points / 100);
         const monthlyInterest = input.loanAmount * (input.interestRate / 100 / MONTHS_PER_YEAR);
         const monthlyIncome = monthlyInterest + (input.servicingFeeMonthly ?? 0);
@@ -292,15 +294,7 @@ export class StrategyAnalyzer {
         numberOfLots: number;
         averageLotPrice: number;
         developmentTimeMonths: number;
-    }): {
-        totalCosts: number;
-        grossRevenue: number;
-        netProfit: number;
-        profitMargin: number;
-        profitPerLot: number;
-        roi: number;
-        annualizedROI: number;
-    } {
+    }): LandDevelopmentResult {
         const totalCosts = input.landCost + input.developmentCosts + input.softCosts + input.carryingCosts;
         const grossRevenue = input.numberOfLots * input.averageLotPrice;
         const netProfit = grossRevenue - totalCosts;
