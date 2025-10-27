@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { PropertyInformationService, PropertyInformation } from './property-information.service';
+import { PropertyInformationService } from './property-information.service';
+import { PropertyInformation } from './property-information.interface';
 
 @Controller('property-information')
 export class PropertyInformationController {
