@@ -3,15 +3,15 @@ import { PropertyInformationService, PropertyInformation } from './property-info
 
 @Controller('property-information')
 export class PropertyInformationController {
-    constructor(private readonly propertyInformationService: PropertyInformationService) {}
+    constructor(private readonly propertyInformationService: PropertyInformationService) { }
 
     @Get(':id')
-    async getProperty(@Param('id') id: string) {
+    async getProperty(@Param('id') id: string): Promise<PropertyInformation> {
         return await this.propertyInformationService.getPropertyById(id);
     }
 
     @Post()
-    async createProperty(@Body() propertyData: PropertyInformation) {
+    async createProperty(@Body() propertyData: PropertyInformation): Promise<PropertyInformation> {
         return await this.propertyInformationService.createNewProperty(propertyData);
     }
 }

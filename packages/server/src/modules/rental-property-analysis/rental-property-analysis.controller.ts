@@ -33,7 +33,7 @@ import {
 
 @Controller('rental-property-analysis')
 export class RentalPropertyAnalysisController {
-    constructor(private readonly rentalPropertyAnalysisService: RentalPropertyAnalysisService) {}
+    constructor(private readonly rentalPropertyAnalysisService: RentalPropertyAnalysisService) { }
 
     /**
      * Analyze rental property with basic calculation (no amortization schedule)
@@ -59,12 +59,7 @@ export class RentalPropertyAnalysisController {
      */
     @Post('mao')
     calculateMaximumAllowableOffer(@Body() input: MaximumAllowableOfferInput): MaximumAllowableOfferResult {
-        return this.rentalPropertyAnalysisService.calculateMaximumAllowableOffer(
-            input.afterRepairValue,
-            input.repairCosts,
-            input.wholesaleFee ?? 0,
-            input.profitMargin ?? 70,
-        );
+        return this.rentalPropertyAnalysisService.calculateMaximumAllowableOffer(input);
     }
 
     /**
@@ -91,12 +86,7 @@ export class RentalPropertyAnalysisController {
      */
     @Post('wholesale')
     calculateWholesaleProfit(@Body() input: WholesaleProfitInput): WholesaleProfitResult {
-        return this.rentalPropertyAnalysisService.calculateWholesaleProfit(
-            input.contractPrice,
-            input.assignmentFee,
-            input.marketingCosts ?? 0,
-            input.otherCosts ?? 0,
-        );
+        return this.rentalPropertyAnalysisService.calculateWholesaleProfit(input);
     }
 
     /**

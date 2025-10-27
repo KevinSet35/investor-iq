@@ -24,8 +24,11 @@ import {
     HouseHackingResult,
     ComparativeAnalysisInput,
     ComparativeAnalysisResult,
+    MaximumAllowableOfferInput,
+    WholesaleProfitInput,
+    WholesaleProfitResult,
 } from '../rental-property-analysis.interfaces';
-import { PERCENT_TO_DECIMAL, DEFAULT_VACANCY_RATE } from '../rental-property-analysis.constants';
+import { PERCENT_TO_DECIMAL, DEFAULT_VACANCY_RATE, DEFAULT_PROFIT_MARGIN } from '../rental-property-analysis.constants';
 import { ExpenseCalculator } from './expense-calculator.service';
 import { MetricsCalculator } from './metrics-calculator.service';
 import { ProjectionCalculator } from './projection-calculator.service';
@@ -66,16 +69,13 @@ export class RentalPropertyAnalysisService {
     // ---------------- Fix & Flip ----------------
 
     calculateMaximumAllowableOffer(
-        afterRepairValue: number,
-        repairCosts: number,
-        wholesaleFee: number = 0,
-        profitMargin: number = 70,
+        input: MaximumAllowableOfferInput
     ): { mao: number; potentialProfit: number; roi: number } {
         return this.strategyAnalyzer.calculateMaximumAllowableOffer(
-            afterRepairValue,
-            repairCosts,
-            wholesaleFee,
-            profitMargin,
+            input.afterRepairValue,
+            input.repairCosts,
+            input.wholesaleFee ?? 0,
+            input.profitMargin ?? DEFAULT_PROFIT_MARGIN,
         );
     }
 
@@ -92,11 +92,14 @@ export class RentalPropertyAnalysisService {
     // ---------------- Wholesale ----------------
 
     calculateWholesaleProfit(
-        contractPrice: number,
-        assignmentFee: number,
-        marketingCosts: number = 0,
-        otherCosts: number = 0,
-    ): { grossProfit: number; netProfit: number; roi: number; endBuyerPrice: number } {
+        input: WholesaleProfitInput
+    ): WholesaleProfitResult {
+
+        const contractPrice = input.contractPrice;
+        const assignmentFee = input.assignmentFee;
+        const marketingCosts = input.marketingCosts ?? 0;
+        const otherCosts = input.otherCosts ?? 0;
+
         const wholesaleInput: WholesaleInput = {
             purchasePrice: contractPrice,
             repairEstimate: 0,
@@ -218,8 +221,8 @@ export class RentalPropertyAnalysisService {
 
         const projectedReturns = input.holdingPeriodYears
             ? this.projectionCalculator.calculateProjectedReturns(input, baseResult, (inp) =>
-                  this.analyzeRentalProperty(inp),
-              )
+                this.analyzeRentalProperty(inp),
+            )
             : undefined;
 
         const breakEvenAnalysis = this.projectionCalculator.calculateBreakEvenAnalysis(

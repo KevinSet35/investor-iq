@@ -9,7 +9,7 @@ import {
 
 @Controller('mortgage-calculation')
 export class MortgageCalculationController {
-    constructor(private readonly mortgageCalculationService: MortgageCalculationService) {}
+    constructor(private readonly mortgageCalculationService: MortgageCalculationService) { }
 
     /**
      * Calculate mortgage payment with flexible input options
@@ -35,14 +35,6 @@ export class MortgageCalculationController {
      */
     @Post('affordability')
     calculateAffordableProperty(@Body() input: AffordabilityInput): AffordabilityResult {
-        return this.mortgageCalculationService.calculateAffordableProperty(
-            input.maxMonthlyPayment,
-            input.annualInterestRate,
-            input.loanTermYears,
-            input.downPaymentPercentage,
-            input.propertyTaxRate,
-            input.homeInsuranceAnnual,
-            input.hoaMonthly,
-        );
+        return this.mortgageCalculationService.calculateAffordableProperty(input);
     }
 }

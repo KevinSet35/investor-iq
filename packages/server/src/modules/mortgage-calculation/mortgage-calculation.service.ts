@@ -1,6 +1,7 @@
 import { NumberUtils } from '@/common/utility/number.utils';
 import { Injectable } from '@nestjs/common';
 import {
+    AffordabilityInput,
     AffordabilityResult,
     AmortizationEntry,
     FlexibleMortgageInput,
@@ -30,14 +31,15 @@ export class MortgageCalculationService {
 
     // -------- Affordability --------
     calculateAffordableProperty(
-        maxMonthlyPayment: number,
-        annualInterestRate: number,
-        loanTermYears: number,
-        downPaymentPercentage: number,
-        propertyTaxRate: number = DEFAULT_PROPERTY_TAX_RATE,
-        homeInsuranceAnnual: number = DEFAULT_HOME_INSURANCE_ANNUAL,
-        hoaMonthly: number = 0,
+        input: AffordabilityInput,
     ): AffordabilityResult {
+        const maxMonthlyPayment = input.maxMonthlyPayment;
+        const annualInterestRate = input.annualInterestRate;
+        const loanTermYears = input.loanTermYears;
+        const downPaymentPercentage = input.downPaymentPercentage;
+        const propertyTaxRate = input.propertyTaxRate ?? DEFAULT_PROPERTY_TAX_RATE;
+        const homeInsuranceAnnual = input.homeInsuranceAnnual ?? DEFAULT_HOME_INSURANCE_ANNUAL;
+        const hoaMonthly = input.hoaMonthly ?? 0;
         this.validateAffordabilityInput(maxMonthlyPayment, annualInterestRate, loanTermYears, downPaymentPercentage);
 
         const monthlyRate = this.calculateMonthlyRate(annualInterestRate);
