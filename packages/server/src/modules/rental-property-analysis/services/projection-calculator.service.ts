@@ -222,7 +222,7 @@ export class ProjectionCalculator {
         analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
         return scenarios.map((change) => {
-            const multiplier = 1 + change / PERCENT_TO_DECIMAL;
+            const multiplier = 1 + (change / PERCENT_TO_DECIMAL);
             const adjustedInput: RentalPropertyInput = {
                 ...input,
                 expenses: {

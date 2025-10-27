@@ -337,7 +337,7 @@ export class MetricsCalculator {
         let remainingBalance = loanAmount;
         const monthlyRate = annualInterestRate / PERCENT_TO_DECIMAL / MONTHS_PER_YEAR;
 
-        for (let month = 1; month <= 12; month++) {
+        for (let month = 1; month <= MONTHS_PER_YEAR; month++) {
             const interestPayment = remainingBalance * monthlyRate;
             const principalPayment = monthlyPrincipalAndInterest - interestPayment;
             totalPrincipalPaid += principalPayment;

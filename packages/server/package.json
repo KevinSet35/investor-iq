@@ -29,7 +29,9 @@
         "helmet": "^7.1.0",
         "morgan": "^1.10.0",
         "reflect-metadata": "^0.1.13",
-        "rxjs": "^7.8.1"
+        "rxjs": "^7.8.1",
+        "openai": "^4.89.0",
+        "@nestjs/config": "^3.0.0"
     },
     "devDependencies": {
         "@nestjs/cli": "^10.1.18",
