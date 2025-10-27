@@ -4,7 +4,7 @@ import { User } from './interfaces/user.interface';
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+    constructor(private readonly usersService: UsersService) {}
 
     @Get()
     findAll(): User[] {

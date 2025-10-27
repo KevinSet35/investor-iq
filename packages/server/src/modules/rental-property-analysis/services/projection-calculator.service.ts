@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { NumberUtils } from '../../../common/utility/number.utils';
-import { RentalPropertyInput, ProjectedReturns, YearlyProjection, ExitAnalysis, BreakEvenAnalysis, SensitivityAnalysis, SensitivityResult, RentalPropertyResult } from '../rental-property-analysis.interfaces';
+import {
+    RentalPropertyInput,
+    ProjectedReturns,
+    YearlyProjection,
+    ExitAnalysis,
+    BreakEvenAnalysis,
+    SensitivityAnalysis,
+    SensitivityResult,
+    RentalPropertyResult,
+} from '../rental-property-analysis.interfaces';
 import {
     MONTHS_PER_YEAR,
     PERCENT_TO_DECIMAL,
     DEFAULT_VACANCY_RATE,
     DEFAULT_APPRECIATION_RATE,
     DEFAULT_RENT_GROWTH_RATE,
-    DEFAULT_EXPENSE_GROWTH_RATE
+    DEFAULT_EXPENSE_GROWTH_RATE,
 } from '../rental-property-analysis.constants';
 import { MortgageCalculationResult } from '@/modules/mortgage-calculation/mortgage-calculation.interfaces';
 
@@ -16,7 +25,7 @@ export class ProjectionCalculator {
     calculateProjectedReturns(
         input: RentalPropertyInput,
         initialResult: RentalPropertyResult,
-        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): ProjectedReturns {
         const year1 = this.projectReturns(input, initialResult, 1);
         const year5 = this.projectReturns(input, initialResult, 5);
@@ -30,7 +39,10 @@ export class ProjectionCalculator {
             const totalCashFlow = projection.cumulativeCashFlow;
             const totalReturn = netProceeds + totalCashFlow - initialResult.downPaymentAmount;
             const annualizedReturn =
-                Math.pow((totalReturn + initialResult.downPaymentAmount) / initialResult.downPaymentAmount, 1 / input.holdingPeriodYears) - 1;
+                Math.pow(
+                    (totalReturn + initialResult.downPaymentAmount) / initialResult.downPaymentAmount,
+                    1 / input.holdingPeriodYears,
+                ) - 1;
 
             exitAnalysis = {
                 salePrice: NumberUtils.roundToTwo(projection.propertyValue),
@@ -44,7 +56,7 @@ export class ProjectionCalculator {
         }
 
         const base: ProjectedReturns = {
-            year1
+            year1,
         };
 
         if (year5 !== undefined) {
@@ -63,7 +75,7 @@ export class ProjectionCalculator {
     calculateBreakEvenAnalysis(
         input: RentalPropertyInput,
         baseResult: RentalPropertyResult,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): BreakEvenAnalysis {
         const monthlyDebtService = mortgageResult.principalAndInterest + mortgageResult.pmi + mortgageResult.hoa;
         const totalMonthlyExpenses = baseResult.operatingExpenses.totalMonthly + monthlyDebtService;
@@ -73,7 +85,8 @@ export class ProjectionCalculator {
 
         let monthsToPositiveCashFlow = 0;
         if (baseResult.cashFlow.cashFlowMonthly < 0) {
-            const initialInvestment = mortgageResult.downPaymentAmount + (input.closingCosts ?? 0) + (input.rehabCosts ?? 0);
+            const initialInvestment =
+                mortgageResult.downPaymentAmount + (input.closingCosts ?? 0) + (input.rehabCosts ?? 0);
             monthsToPositiveCashFlow = Math.ceil(initialInvestment / Math.abs(baseResult.cashFlow.cashFlowMonthly));
         }
 
@@ -88,7 +101,7 @@ export class ProjectionCalculator {
     performSensitivityAnalysis(
         input: RentalPropertyInput,
         baseResult: RentalPropertyResult,
-        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityAnalysis {
         const scenarios = [-10, -5, 0, 5, 10];
         const vacancyImpact = this.calculateVacancyScenarios(input, scenarios, analyzeRentalPropertyFn);
@@ -98,7 +111,11 @@ export class ProjectionCalculator {
         return { vacancyImpact, rentChangeImpact, interestRateImpact, expenseChangeImpact };
     }
 
-    private projectReturns(input: RentalPropertyInput, initialResult: RentalPropertyResult, years: number): YearlyProjection {
+    private projectReturns(
+        input: RentalPropertyInput,
+        initialResult: RentalPropertyResult,
+        years: number,
+    ): YearlyProjection {
         const appreciationRate = (input.appreciationRate ?? DEFAULT_APPRECIATION_RATE) / PERCENT_TO_DECIMAL;
         const rentGrowthRate = (input.rentGrowthRate ?? DEFAULT_RENT_GROWTH_RATE) / PERCENT_TO_DECIMAL;
         const expenseGrowthRate = (input.expenseGrowthRate ?? DEFAULT_EXPENSE_GROWTH_RATE) / PERCENT_TO_DECIMAL;
@@ -138,9 +155,9 @@ export class ProjectionCalculator {
     private calculateVacancyScenarios(
         input: RentalPropertyInput,
         scenarios: number[],
-        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
-        return scenarios.map(change => {
+        return scenarios.map((change) => {
             const adjustedInput: RentalPropertyInput = {
                 ...input,
                 expenses: {
@@ -149,41 +166,62 @@ export class ProjectionCalculator {
                 },
             };
             const result = analyzeRentalPropertyFn(adjustedInput);
-            return { change, cashFlow: result.cashFlow.cashFlowMonthly, capRate: result.metrics.capRate, cashOnCash: result.metrics.cashOnCashReturn };
+            return {
+                change,
+                cashFlow: result.cashFlow.cashFlowMonthly,
+                capRate: result.metrics.capRate,
+                cashOnCash: result.metrics.cashOnCashReturn,
+            };
         });
     }
 
     private calculateRentScenarios(
         input: RentalPropertyInput,
         scenarios: number[],
-        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
-        return scenarios.map(change => {
-            const adjustedInput: RentalPropertyInput = { ...input, monthlyRent: input.monthlyRent * (1 + change / PERCENT_TO_DECIMAL) };
+        return scenarios.map((change) => {
+            const adjustedInput: RentalPropertyInput = {
+                ...input,
+                monthlyRent: input.monthlyRent * (1 + change / PERCENT_TO_DECIMAL),
+            };
             const result = analyzeRentalPropertyFn(adjustedInput);
-            return { change, cashFlow: result.cashFlow.cashFlowMonthly, capRate: result.metrics.capRate, cashOnCash: result.metrics.cashOnCashReturn };
+            return {
+                change,
+                cashFlow: result.cashFlow.cashFlowMonthly,
+                capRate: result.metrics.capRate,
+                cashOnCash: result.metrics.cashOnCashReturn,
+            };
         });
     }
 
     private calculateInterestRateScenarios(
         input: RentalPropertyInput,
         scenarios: number[],
-        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
-        return scenarios.map(change => {
+        return scenarios.map((change) => {
             const baseRate = input.annualInterestRate;
-            const adjustedInput: RentalPropertyInput = { ...input, annualInterestRate: baseRate * (1 + change / PERCENT_TO_DECIMAL) };
+            const adjustedInput: RentalPropertyInput = {
+                ...input,
+                annualInterestRate: baseRate * (1 + change / PERCENT_TO_DECIMAL),
+            };
             const result = analyzeRentalPropertyFn(adjustedInput);
-            return { change, cashFlow: result.cashFlow.cashFlowMonthly, capRate: result.metrics.capRate, cashOnCash: result.metrics.cashOnCashReturn };
+            return {
+                change,
+                cashFlow: result.cashFlow.cashFlowMonthly,
+                capRate: result.metrics.capRate,
+                cashOnCash: result.metrics.cashOnCashReturn,
+            };
         });
     }
 
     private calculateExpenseScenarios(
         input: RentalPropertyInput,
         scenarios: number[],
-        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: RentalPropertyInput) => RentalPropertyResult,
     ): SensitivityResult[] {
-        return scenarios.map(change => {
+        return scenarios.map((change) => {
             const multiplier = 1 + change / PERCENT_TO_DECIMAL;
             const adjustedInput: RentalPropertyInput = {
                 ...input,
@@ -194,7 +232,12 @@ export class ProjectionCalculator {
                 },
             };
             const result = analyzeRentalPropertyFn(adjustedInput);
-            return { change, cashFlow: result.cashFlow.cashFlowMonthly, capRate: result.metrics.capRate, cashOnCash: result.metrics.cashOnCashReturn };
+            return {
+                change,
+                cashFlow: result.cashFlow.cashFlowMonthly,
+                capRate: result.metrics.capRate,
+                cashOnCash: result.metrics.cashOnCashReturn,
+            };
         });
     }
 }

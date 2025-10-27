@@ -50,11 +50,11 @@ export enum State {
     WA = 'Washington',
     WV = 'West Virginia',
     WI = 'Wisconsin',
-    WY = 'Wyoming'
+    WY = 'Wyoming',
 }
 
 export enum Country {
-    US = 'United States'
+    US = 'United States',
 }
 
 export interface PropertyAddress {
@@ -73,7 +73,7 @@ export interface PropertyFeatures {
     squareFeet: number;
     yearBuilt: number;
     lotSize?: number; // in square feet
-    acres?: number;   // property size in acres
+    acres?: number; // property size in acres
     parking?: {
         type: 'garage' | 'carport' | 'street' | 'none';
         spaces: number;
@@ -111,7 +111,7 @@ export interface PropertyInformation {
     address: PropertyAddress;
     features: PropertyFeatures;
     amenities: PropertyAmenities;
-    description?: string;  // Optional property description
+    description?: string; // Optional property description
     zoning?: string;
     schoolDistrict?: string;
     floodZone?: boolean;
@@ -156,16 +156,18 @@ export class PropertyInformationService {
 
         // Address validation
         const requiredAddressFields: (keyof PropertyAddress)[] = ['street', 'city', 'state', 'zipCode', 'country'];
-        if (!requiredAddressFields.every(field => property.address[field])) {
+        if (!requiredAddressFields.every((field) => property.address[field])) {
             return false;
         }
 
         // Features validation
-        if (property.features.bedrooms <= 0 ||
+        if (
+            property.features.bedrooms <= 0 ||
             property.features.fullBathrooms < 0 ||
             property.features.halfBathrooms < 0 ||
-            (property.features.fullBathrooms + property.features.halfBathrooms) === 0 ||
-            property.features.squareFeet <= 0) {
+            property.features.fullBathrooms + property.features.halfBathrooms === 0 ||
+            property.features.squareFeet <= 0
+        ) {
             return false;
         }
 
@@ -182,5 +184,4 @@ export class PropertyInformationService {
     // isMultiUnit(property: PropertyInformation): boolean {
     //     return property.propertyType === 'multi_family' || property.propertyType === 'apartment';
     // }
-
 }

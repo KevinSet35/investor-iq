@@ -7,7 +7,7 @@ export class ExpenseCalculator {
     calculateOperatingExpenses(
         monthlyRent: number,
         propertyPrice: number,
-        expenses: RentalPropertyExpenses
+        expenses: RentalPropertyExpenses,
     ): OperatingExpenses {
         const vacancy = this.calculateVacancy(monthlyRent, expenses);
         const propertyManagement = this.calculatePropertyManagement(monthlyRent, expenses);
@@ -49,7 +49,7 @@ export class ExpenseCalculator {
             specialAssessments,
             advertising,
             turnover,
-            totalMonthly
+            totalMonthly,
         };
     }
 

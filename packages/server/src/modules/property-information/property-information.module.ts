@@ -6,4 +6,4 @@ import { PropertyInformationService } from './property-information.service';
     controllers: [PropertyInformationController],
     providers: [PropertyInformationService],
 })
-export class PropertyInformationModule { }
+export class PropertyInformationModule {}

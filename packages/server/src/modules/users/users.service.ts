@@ -21,7 +21,7 @@ export class UsersService {
     }
 
     findOne(id: string): User {
-        const user = this.users.find(user => user.id === id);
+        const user = this.users.find((user) => user.id === id);
         if (!user) {
             throw new Error(`User with id ${id} not found`);
         }

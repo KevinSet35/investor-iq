@@ -28,23 +28,19 @@ import {
     PrivateLendingResult,
     LandDevelopmentInput,
     LandDevelopmentResult,
-    RentalPropertyResult
+    RentalPropertyResult,
 } from './rental-property-analysis.interfaces';
 
 @Controller('rental-property-analysis')
 export class RentalPropertyAnalysisController {
-    constructor(
-        private readonly rentalPropertyAnalysisService: RentalPropertyAnalysisService,
-    ) { }
+    constructor(private readonly rentalPropertyAnalysisService: RentalPropertyAnalysisService) {}
 
     /**
      * Analyze rental property with basic calculation (no amortization schedule)
      * POST /rental-property-analysis
      */
     @Post()
-    analyzeRentalProperty(
-        @Body() input: RentalPropertyInput
-    ): RentalPropertyResult {
+    analyzeRentalProperty(@Body() input: RentalPropertyInput): RentalPropertyResult {
         return this.rentalPropertyAnalysisService.analyzeRentalProperty(input);
     }
 
@@ -53,9 +49,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/with-schedule
      */
     @Post('with-schedule')
-    analyzeRentalPropertyWithSchedule(
-        @Body() input: RentalPropertyInput
-    ): RentalPropertyResult {
+    analyzeRentalPropertyWithSchedule(@Body() input: RentalPropertyInput): RentalPropertyResult {
         return this.rentalPropertyAnalysisService.analyzeRentalPropertyWithSchedule(input);
     }
 
@@ -64,14 +58,12 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/mao
      */
     @Post('mao')
-    calculateMaximumAllowableOffer(
-        @Body() input: MaximumAllowableOfferInput
-    ): MaximumAllowableOfferResult {
+    calculateMaximumAllowableOffer(@Body() input: MaximumAllowableOfferInput): MaximumAllowableOfferResult {
         return this.rentalPropertyAnalysisService.calculateMaximumAllowableOffer(
             input.afterRepairValue,
             input.repairCosts,
             input.wholesaleFee ?? 0,
-            input.profitMargin ?? 70
+            input.profitMargin ?? 70,
         );
     }
 
@@ -80,9 +72,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/fix-and-flip
      */
     @Post('fix-and-flip')
-    calculateFixAndFlipAnalysis(
-        @Body() input: FixAndFlipInput
-    ): FixAndFlipResult {
+    calculateFixAndFlipAnalysis(@Body() input: FixAndFlipInput): FixAndFlipResult {
         return this.rentalPropertyAnalysisService.calculateFixAndFlipAnalysis(input);
     }
 
@@ -91,9 +81,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/brrrr
      */
     @Post('brrrr')
-    calculateBRRRRAnalysis(
-        @Body() input: BRRRRInput
-    ): BRRRRResult {
+    calculateBRRRRAnalysis(@Body() input: BRRRRInput): BRRRRResult {
         return this.rentalPropertyAnalysisService.calculateBRRRRAnalysis(input);
     }
 
@@ -102,14 +90,12 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/wholesale
      */
     @Post('wholesale')
-    calculateWholesaleProfit(
-        @Body() input: WholesaleProfitInput
-    ): WholesaleProfitResult {
+    calculateWholesaleProfit(@Body() input: WholesaleProfitInput): WholesaleProfitResult {
         return this.rentalPropertyAnalysisService.calculateWholesaleProfit(
             input.contractPrice,
             input.assignmentFee,
             input.marketingCosts ?? 0,
-            input.otherCosts ?? 0
+            input.otherCosts ?? 0,
         );
     }
 
@@ -118,9 +104,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/airbnb
      */
     @Post('airbnb')
-    calculateAirbnbMetrics(
-        @Body() input: AirbnbInput
-    ): ShortTermRentalResult {
+    calculateAirbnbMetrics(@Body() input: AirbnbInput): ShortTermRentalResult {
         return this.rentalPropertyAnalysisService.calculateAirbnbMetrics(input);
     }
 
@@ -129,9 +113,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/commercial-noi
      */
     @Post('commercial-noi')
-    calculateCommercialNOI(
-        @Body() input: CommercialNOIInput
-    ): CommercialNOIResult {
+    calculateCommercialNOI(@Body() input: CommercialNOIInput): CommercialNOIResult {
         const noi = this.rentalPropertyAnalysisService.calculateCommercialNOI(input);
         return { noi };
     }
@@ -141,9 +123,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/value-add
      */
     @Post('value-add')
-    calculateValueAddPotential(
-        @Body() input: ValueAddInput
-    ): ValueAddResult {
+    calculateValueAddPotential(@Body() input: ValueAddInput): ValueAddResult {
         return this.rentalPropertyAnalysisService.calculateValueAddPotential(input);
     }
 
@@ -152,9 +132,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/syndication
      */
     @Post('syndication')
-    calculateSyndicationReturns(
-        @Body() input: SyndicationInput
-    ): SyndicationResult {
+    calculateSyndicationReturns(@Body() input: SyndicationInput): SyndicationResult {
         return this.rentalPropertyAnalysisService.calculateSyndicationReturns(input);
     }
 
@@ -163,9 +141,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/hard-money
      */
     @Post('hard-money')
-    calculateHardMoneyLoan(
-        @Body() input: HardMoneyInput
-    ): HardMoneyResult {
+    calculateHardMoneyLoan(@Body() input: HardMoneyInput): HardMoneyResult {
         return this.rentalPropertyAnalysisService.calculateHardMoneyLoan(input);
     }
 
@@ -174,9 +150,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/private-lending
      */
     @Post('private-lending')
-    calculatePrivateLendingReturns(
-        @Body() input: PrivateLendingInput
-    ): PrivateLendingResult {
+    calculatePrivateLendingReturns(@Body() input: PrivateLendingInput): PrivateLendingResult {
         return this.rentalPropertyAnalysisService.calculatePrivateLendingReturns(input);
     }
 
@@ -185,9 +159,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/land-development
      */
     @Post('land-development')
-    calculateLandDevelopment(
-        @Body() input: LandDevelopmentInput
-    ): LandDevelopmentResult {
+    calculateLandDevelopment(@Body() input: LandDevelopmentInput): LandDevelopmentResult {
         return this.rentalPropertyAnalysisService.calculateLandDevelopment(input);
     }
 
@@ -196,9 +168,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/house-hacking
      */
     @Post('house-hacking')
-    calculateHouseHacking(
-        @Body() input: HouseHackingInput
-    ): HouseHackingResult {
+    calculateHouseHacking(@Body() input: HouseHackingInput): HouseHackingResult {
         return this.rentalPropertyAnalysisService.calculateHouseHacking(input);
     }
 
@@ -207,9 +177,7 @@ export class RentalPropertyAnalysisController {
      * POST /rental-property-analysis/compare
      */
     @Post('compare')
-    compareScenarios(
-        @Body() input: ComparativeAnalysisInput
-    ): ComparativeAnalysisResult {
+    compareScenarios(@Body() input: ComparativeAnalysisInput): ComparativeAnalysisResult {
         return this.rentalPropertyAnalysisService.compareScenarios(input);
     }
 }

@@ -2,53 +2,53 @@ import { z } from 'zod';
 
 // Project name validation schema
 export const ProjectNameSchema = z
-  .string()
-  .min(1, "Project name is required")
-  .regex(/^[a-z0-9-]+$/, {
-    message: "Project name can only contain lowercase letters, numbers, and hyphens",
-  })
-  .refine((name) => !/[A-Z]/.test(name), {
-    message: "Project name cannot contain uppercase letters",
-  })
-  .refine((name) => !/\s/.test(name), {
-    message: "Project name cannot contain spaces",
-  })
-  .refine((name) => !name.startsWith("-") && !name.endsWith("-"), {
-    message: "Project name cannot start or end with a hyphen",
-  })
-  .refine((name) => !name.includes("--"), {
-    message: "Project name cannot contain consecutive hyphens",
-  });
+    .string()
+    .min(1, 'Project name is required')
+    .regex(/^[a-z0-9-]+$/, {
+        message: 'Project name can only contain lowercase letters, numbers, and hyphens',
+    })
+    .refine((name) => !/[A-Z]/.test(name), {
+        message: 'Project name cannot contain uppercase letters',
+    })
+    .refine((name) => !/\s/.test(name), {
+        message: 'Project name cannot contain spaces',
+    })
+    .refine((name) => !name.startsWith('-') && !name.endsWith('-'), {
+        message: 'Project name cannot start or end with a hyphen',
+    })
+    .refine((name) => !name.includes('--'), {
+        message: 'Project name cannot contain consecutive hyphens',
+    });
 
 // Available integrations
 export const IntegrationSchema = z.enum([
-  "git",
-  "supabase",
-  "docker",
-  "jest",
-  "typescript",
-  "eslint",
-  "prettier",
-  "github_actions"
+    'git',
+    'supabase',
+    'docker',
+    'jest',
+    'typescript',
+    'eslint',
+    'prettier',
+    'github_actions',
 ]);
 
 // Package manager options
-export const PackageManagerSchema = z.enum(["npm", "yarn", "pnpm"]);
+export const PackageManagerSchema = z.enum(['npm', 'yarn', 'pnpm']);
 
 // Node version options
-export const NodeVersionSchema = z.enum(["18.x", "20.x", "latest"]);
+export const NodeVersionSchema = z.enum(['18.x', '20.x', 'latest']);
 
 // Advanced configuration schema
 export const AdvancedConfigSchema = z.object({
-  packageManager: PackageManagerSchema.default("npm"),
-  nodeVersion: NodeVersionSchema.default("18.x")
+    packageManager: PackageManagerSchema.default('npm'),
+    nodeVersion: NodeVersionSchema.default('18.x'),
 });
 
 // Complete script generator input schema
 export const ScriptGeneratorSchema = z.object({
-  projectName: ProjectNameSchema,
-  integrations: z.array(IntegrationSchema).default(["typescript"]),
-  advancedConfig: AdvancedConfigSchema.optional()
+    projectName: ProjectNameSchema,
+    integrations: z.array(IntegrationSchema).default(['typescript']),
+    advancedConfig: AdvancedConfigSchema.optional(),
 });
 
 // Type definitions

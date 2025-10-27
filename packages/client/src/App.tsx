@@ -35,8 +35,6 @@ interface User {
     // Add other user properties as needed
 }
 
-
-
 const App: React.FC = () => {
     // Environment configuration
     const { CLIENT_PORT, SERVER_PORT, API_URL }: EnvironmentConfig = getEnvironmentConfig();
@@ -49,7 +47,7 @@ const App: React.FC = () => {
         const url = `${API_URL}/users`;
         console.log('user url:', url);
         return url;
-    }
+    };
 
     // API Service
     const apiService = {
@@ -58,8 +56,6 @@ const App: React.FC = () => {
             console.log(response);
             return response.data.payload;
         },
-
-
     };
 
     useEffect(() => {

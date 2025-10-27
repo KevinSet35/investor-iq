@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { config } from "dotenv";
+import { config } from 'dotenv';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import * as path from 'path';
@@ -11,7 +11,7 @@ import { PathUtil } from './common/utility/path.utils';
 
 // Load environment variables from the root directory
 config({
-    path: path.resolve(__dirname, '../../..', '.env')
+    path: path.resolve(__dirname, '../../..', '.env'),
 });
 
 const getClientPort = (): number => {
@@ -20,7 +20,7 @@ const getClientPort = (): number => {
 
 const getServerPort = (): number => {
     return Number(process.env['PORT']) || Number(process.env['SERVER_PORT']) || 5000;
-}
+};
 
 async function bootstrap() {
     const SERVER_PORT = getServerPort();
@@ -37,14 +37,13 @@ async function bootstrap() {
     });
 
     // Set global prefix for all routes
-    app.setGlobalPrefix("api");
+    app.setGlobalPrefix('api');
 
     // Serve the static files from the React app
     app.useStaticAssets(PathUtil.getStaticAssetsPath());
 
     // Apply the ServeStaticMiddleware
     app.use(new ServeStaticMiddleware().use);
-
 
     // Apply global interceptors and filters
     app.useGlobalInterceptors(new ResponseInterceptor());
@@ -67,7 +66,7 @@ async function bootstrap() {
     console.log(`API available at http://localhost:${SERVER_PORT}/api`);
 }
 
-bootstrap().catch(err => {
+bootstrap().catch((err) => {
     console.error('Error starting server:', err);
     process.exit(1);
 });

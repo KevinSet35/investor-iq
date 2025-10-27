@@ -7,4 +7,4 @@ import { MortgageCalculationService } from './mortgage-calculation.service';
     providers: [MortgageCalculationService],
     exports: [MortgageCalculationService],
 })
-export class MortgageCalculationModule { }
+export class MortgageCalculationModule {}

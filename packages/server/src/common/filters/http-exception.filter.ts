@@ -1,5 +1,5 @@
-import { ResponseStatus, ApiResponse } from "@investor-iq/types";
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
+import { ResponseStatus, ApiResponse } from '@investor-iq/types';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -14,7 +14,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
             status: ResponseStatus.ERROR,
             error: {
                 code: status,
-                message: exception.message || "Unexpected error occurred",
+                message: exception.message || 'Unexpected error occurred',
                 details: (exception.getResponse() as any)?.details ?? null,
             },
             meta: {

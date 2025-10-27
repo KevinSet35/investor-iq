@@ -1,8 +1,10 @@
-
 // ============================================================================
 // INTERFACES (Rental domain)
 
-import { FlexibleMortgageInput, MortgageCalculationResult } from "../mortgage-calculation/mortgage-calculation.interfaces";
+import {
+    FlexibleMortgageInput,
+    MortgageCalculationResult,
+} from '../mortgage-calculation/mortgage-calculation.interfaces';
 
 // ============================================================================
 export interface RentalPropertyExpenses {
@@ -183,8 +185,6 @@ export interface SensitivityResult {
     capRate: number;
     cashOnCash: number;
 }
-
-
 
 // ============================================================================
 // ADDITIONAL STRATEGY INTERFACES (Rental domain)

@@ -1,9 +1,19 @@
 import { join } from 'path';
 
 export class PathUtil {
-
     static getIndexHtmlPath(): string {
-        const indexHtmlPath = join(__dirname, '..', '..', '..', '..', '..', 'packages', 'client', 'build', 'index.html');
+        const indexHtmlPath = join(
+            __dirname,
+            '..',
+            '..',
+            '..',
+            '..',
+            '..',
+            'packages',
+            'client',
+            'build',
+            'index.html',
+        );
         // console.log(`indexHtmlPath: ${indexHtmlPath}`);
         return indexHtmlPath;
     }
@@ -13,6 +23,4 @@ export class PathUtil {
         // console.log(`staticAssetsPath: ${staticAssetsPath}`);
         return staticAssetsPath;
     }
-
 }
-

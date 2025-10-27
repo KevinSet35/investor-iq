@@ -1,14 +1,15 @@
 import { Controller, Post, Body } from '@nestjs/common';
+import { MortgageCalculationService } from './mortgage-calculation.service';
 import {
-    MortgageCalculationService,
-} from './mortgage-calculation.service';
-import { AffordabilityInput, AffordabilityResult, FlexibleMortgageInput, MortgageCalculationResult } from './mortgage-calculation.interfaces';
+    AffordabilityInput,
+    AffordabilityResult,
+    FlexibleMortgageInput,
+    MortgageCalculationResult,
+} from './mortgage-calculation.interfaces';
 
 @Controller('mortgage-calculation')
 export class MortgageCalculationController {
-    constructor(
-        private readonly mortgageCalculationService: MortgageCalculationService,
-    ) { }
+    constructor(private readonly mortgageCalculationService: MortgageCalculationService) {}
 
     /**
      * Calculate mortgage payment with flexible input options
@@ -41,7 +42,7 @@ export class MortgageCalculationController {
             input.downPaymentPercentage,
             input.propertyTaxRate,
             input.homeInsuranceAnnual,
-            input.hoaMonthly
+            input.hoaMonthly,
         );
     }
 }

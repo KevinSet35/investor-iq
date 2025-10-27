@@ -1,6 +1,6 @@
 export enum ResponseStatus {
-    SUCCESS = "success",
-    ERROR = "error",
+    SUCCESS = 'success',
+    ERROR = 'error',
 }
 
 export interface ApiResponse<T = null> {

@@ -1,13 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { NumberUtils } from '../../../common/utility/number.utils';
-import { RentalPropertyInput, CashFlow, Metrics, EnhancedMetrics, OperatingExpenses, InvestmentSummary } from '../rental-property-analysis.interfaces';
+import {
+    RentalPropertyInput,
+    CashFlow,
+    Metrics,
+    EnhancedMetrics,
+    OperatingExpenses,
+    InvestmentSummary,
+} from '../rental-property-analysis.interfaces';
 import {
     MONTHS_PER_YEAR,
     PERCENT_TO_DECIMAL,
     MINIMUM_LTV_FOR_DSCR,
     DEFAULT_VACANCY_RATE,
     DEFAULT_APPRECIATION_RATE,
-    DEFAULT_DEPRECIATION_YEARS
+    DEFAULT_DEPRECIATION_YEARS,
 } from '../rental-property-analysis.constants';
 import { MortgageCalculationResult } from '@/modules/mortgage-calculation/mortgage-calculation.interfaces';
 
@@ -17,7 +24,7 @@ export class MetricsCalculator {
         monthlyRent: number,
         effectiveMonthlyRent: number,
         totalExpenses: number,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): CashFlow {
         const grossRent = monthlyRent;
         const effectiveRent = effectiveMonthlyRent;
@@ -42,7 +49,7 @@ export class MetricsCalculator {
         propertyPrice: number,
         cashFlow: CashFlow,
         monthlyOperatingExpenses: number,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): Metrics {
         const annualRent = monthlyRent * MONTHS_PER_YEAR;
         const annualNOI = cashFlow.netOperatingIncome * MONTHS_PER_YEAR;
@@ -55,7 +62,11 @@ export class MetricsCalculator {
         const grossRentMultiplier = this.calculateGrossRentMultiplier(propertyPrice, annualRent);
         const debtCoverageRatio = this.calculateDebtCoverageRatio(annualNOI, annualDebtService);
         const operatingExpenseRatio = this.calculateOperatingExpenseRatio(monthlyOperatingExpenses, annualRent);
-        const breakEvenOccupancy = this.calculateBreakEvenOccupancy(monthlyOperatingExpenses, mortgageResult, annualRent);
+        const breakEvenOccupancy = this.calculateBreakEvenOccupancy(
+            monthlyOperatingExpenses,
+            mortgageResult,
+            annualRent,
+        );
 
         return {
             capRate: NumberUtils.roundToTwo(capRate),
@@ -72,18 +83,19 @@ export class MetricsCalculator {
         baseMetrics: Metrics,
         cashFlow: CashFlow,
         operatingExpenses: OperatingExpenses,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): EnhancedMetrics {
         const annualRent = input.monthlyRent * MONTHS_PER_YEAR;
         const annualNOI = cashFlow.netOperatingIncome * MONTHS_PER_YEAR;
         const annualDebtService = mortgageResult.principalAndInterest * MONTHS_PER_YEAR;
-        const totalCashInvested = mortgageResult.downPaymentAmount + (input.closingCosts ?? 0) + (input.rehabCosts ?? 0);
+        const totalCashInvested =
+            mortgageResult.downPaymentAmount + (input.closingCosts ?? 0) + (input.rehabCosts ?? 0);
 
         const landValue = input.landValue ?? input.propertyPrice * 0.2;
         const annualDepreciation = this.calculateAnnualDepreciation(
             input.propertyPrice,
             landValue,
-            input.depreciationYears
+            input.depreciationYears,
         );
 
         const taxShelterValue = input.marginalTaxRate
@@ -93,7 +105,7 @@ export class MetricsCalculator {
         const equityBuildupYear1 = this.calculateEquityBuildupYear1(
             mortgageResult.principalAndInterest,
             input.annualInterestRate,
-            mortgageResult.loanAmount
+            mortgageResult.loanAmount,
         );
 
         const appreciationRate = (input.appreciationRate ?? DEFAULT_APPRECIATION_RATE) / PERCENT_TO_DECIMAL;
@@ -105,7 +117,7 @@ export class MetricsCalculator {
             cashFlow.cashFlowAnnual,
             appreciationYear1,
             equityBuildupYear1,
-            totalEquityYear1
+            totalEquityYear1,
         );
 
         const totalROI = this.calculateTotalROI(
@@ -113,7 +125,7 @@ export class MetricsCalculator {
             appreciationYear1,
             equityBuildupYear1,
             taxShelterValue ?? 0,
-            totalCashInvested
+            totalCashInvested,
         );
 
         let afterTaxCashFlow: number | undefined;
@@ -122,16 +134,18 @@ export class MetricsCalculator {
             afterTaxCashFlow = this.calculateAfterTaxCashFlow(
                 cashFlow.cashFlowAnnual,
                 taxableIncome,
-                input.marginalTaxRate
+                input.marginalTaxRate,
             );
         }
 
         const base: EnhancedMetrics = {
             ...baseMetrics,
             totalReturnOnInvestment: NumberUtils.roundToTwo(totalROI),
-            rentToValueRatio: NumberUtils.roundToTwo(this.calculateRentToValueRatio(input.monthlyRent, input.propertyPrice)),
+            rentToValueRatio: NumberUtils.roundToTwo(
+                this.calculateRentToValueRatio(input.monthlyRent, input.propertyPrice),
+            ),
             expenseToIncomeRatio: NumberUtils.roundToTwo(
-                this.calculateExpenseToIncomeRatio(operatingExpenses.totalMonthly, input.monthlyRent)
+                this.calculateExpenseToIncomeRatio(operatingExpenses.totalMonthly, input.monthlyRent),
             ),
             onePercentRule: this.calculateOnePercentRule(input.monthlyRent, input.propertyPrice),
             twoPercentRule: this.calculateTwoPercentRule(input.monthlyRent, input.propertyPrice),
@@ -139,20 +153,20 @@ export class MetricsCalculator {
             cashFlowPerUnit: NumberUtils.roundToTwo(cashFlow.cashFlowMonthly),
             cashFlowPerDoor: NumberUtils.roundToTwo(cashFlow.cashFlowMonthly),
             annualizedReturn: NumberUtils.roundToTwo(
-                (cashFlow.cashFlowAnnual / Math.max(totalCashInvested, 1e-9)) * PERCENT_TO_DECIMAL
+                (cashFlow.cashFlowAnnual / Math.max(totalCashInvested, 1e-9)) * PERCENT_TO_DECIMAL,
             ),
             loanConstant: NumberUtils.roundToTwo(
-                this.calculateLoanConstant(annualDebtService, Math.max(mortgageResult.loanAmount, 1e-9))
+                this.calculateLoanConstant(annualDebtService, Math.max(mortgageResult.loanAmount, 1e-9)),
             ),
             debtYieldRatio: NumberUtils.roundToTwo(
-                this.calculateDebtYield(annualNOI, Math.max(mortgageResult.loanAmount, 1e-9))
+                this.calculateDebtYield(annualNOI, Math.max(mortgageResult.loanAmount, 1e-9)),
             ),
             breakEvenRatio: NumberUtils.roundToTwo(
                 this.calculateBreakEvenRatio(
                     operatingExpenses.totalMonthly * MONTHS_PER_YEAR,
                     annualDebtService,
-                    annualRent
-                )
+                    annualRent,
+                ),
             ),
         };
 
@@ -178,7 +192,7 @@ export class MetricsCalculator {
             base.appreciationYear1 = NumberUtils.roundToTwo(appreciationYear1);
         }
         const vacancySensativity = NumberUtils.roundToTwo(
-            this.calculateVacancySensitivity(input.monthlyRent, input.expenses.vacancyRate ?? DEFAULT_VACANCY_RATE)
+            this.calculateVacancySensitivity(input.monthlyRent, input.expenses.vacancyRate ?? DEFAULT_VACANCY_RATE),
         );
         if (vacancySensativity !== undefined) {
             base.vacancySensitivity = vacancySensativity;
@@ -187,8 +201,8 @@ export class MetricsCalculator {
             this.calculateMaintenanceReserveRatio(
                 operatingExpenses.maintenance,
                 operatingExpenses.capex,
-                input.monthlyRent
-            )
+                input.monthlyRent,
+            ),
         );
         if (maintenanceReserveRatio !== undefined) {
             base.maintenanceReserveRatio = maintenanceReserveRatio;
@@ -201,7 +215,7 @@ export class MetricsCalculator {
         input: RentalPropertyInput,
         cashFlow: CashFlow,
         totalROI: number,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): InvestmentSummary {
         const totalCashNeeded = mortgageResult.downPaymentAmount + (input.closingCosts ?? 0) + (input.rehabCosts ?? 0);
         const allInCost = input.propertyPrice + (input.closingCosts ?? 0) + (input.rehabCosts ?? 0);
@@ -250,7 +264,7 @@ export class MetricsCalculator {
     private calculateBreakEvenOccupancy(
         monthlyOperatingExpenses: number,
         mortgageResult: MortgageCalculationResult,
-        annualRent: number
+        annualRent: number,
     ): number {
         if (annualRent === 0) return 0;
         const monthlyDebtService = this.calculateMonthlyDebtService(mortgageResult);
@@ -298,7 +312,7 @@ export class MetricsCalculator {
     private calculateAnnualDepreciation(
         propertyPrice: number,
         landValue: number = 0,
-        depreciationYears: number = DEFAULT_DEPRECIATION_YEARS
+        depreciationYears: number = DEFAULT_DEPRECIATION_YEARS,
     ): number {
         const depreciableBasis = propertyPrice - landValue;
         if (depreciableBasis <= 0 || depreciationYears === 0) return 0;
@@ -317,7 +331,7 @@ export class MetricsCalculator {
     private calculateEquityBuildupYear1(
         monthlyPrincipalAndInterest: number,
         annualInterestRate: number,
-        loanAmount: number
+        loanAmount: number,
     ): number {
         let totalPrincipalPaid = 0;
         let remainingBalance = loanAmount;
@@ -336,7 +350,7 @@ export class MetricsCalculator {
         annualCashFlow: number,
         appreciation: number,
         equityBuilddup: number,
-        currentEquity: number
+        currentEquity: number,
     ): number {
         if (currentEquity <= 0) return 0;
         const totalReturn = annualCashFlow + appreciation + equityBuilddup;
@@ -348,7 +362,7 @@ export class MetricsCalculator {
         appreciation: number,
         equityBuilddup: number,
         taxBenefits: number,
-        totalCashInvested: number
+        totalCashInvested: number,
     ): number {
         if (totalCashInvested <= 0) return 0;
         const totalReturn = annualCashFlow + appreciation + equityBuilddup + taxBenefits;
@@ -366,7 +380,11 @@ export class MetricsCalculator {
         return annualRent * 0.01;
     }
 
-    private calculateMaintenanceReserveRatio(maintenanceExpense: number, capexExpense: number, grossRent: number): number {
+    private calculateMaintenanceReserveRatio(
+        maintenanceExpense: number,
+        capexExpense: number,
+        grossRent: number,
+    ): number {
         if (grossRent === 0) return 0;
         const totalReserves = (maintenanceExpense + capexExpense) * MONTHS_PER_YEAR;
         const annualRent = grossRent * MONTHS_PER_YEAR;

@@ -1,4 +1,3 @@
-
 // ============================================================================
 // INTERFACES
 // ============================================================================
@@ -37,7 +36,7 @@ export interface FlexibleMortgageInput {
     homeInsurancePercent?: number;
 
     hoaMonthly?: number;
-    pmiMonthly?: number;       // override calculated PMI if provided
+    pmiMonthly?: number; // override calculated PMI if provided
     autoCalculatePMI?: boolean; // default true
 }
 
@@ -67,19 +66,19 @@ export interface AmortizationEntry {
 
 export interface MortgageCalculationResult {
     principalAndInterest: number; // monthly P&I
-    propertyTax: number;          // monthly tax
-    homeInsurance: number;        // monthly insurance
-    pmi: number;                  // monthly PMI (may be 0)
-    hoa: number;                  // monthly HOA
-    totalMonthlyPayment: number;  // full monthly payment (P&I + tax + ins + pmi + hoa)
+    propertyTax: number; // monthly tax
+    homeInsurance: number; // monthly insurance
+    pmi: number; // monthly PMI (may be 0)
+    hoa: number; // monthly HOA
+    totalMonthlyPayment: number; // full monthly payment (P&I + tax + ins + pmi + hoa)
 
-    totalPayment: number;         // total P&I over life of loan
-    totalInterest: number;        // total interest over life of loan
+    totalPayment: number; // total P&I over life of loan
+    totalInterest: number; // total interest over life of loan
 
     loanAmount: number;
     downPaymentAmount: number;
     downPaymentPercentage: number;
-    loanToValue: number;          // initial LTV (%)
+    loanToValue: number; // initial LTV (%)
 
     breakdown: PaymentBreakdown;
     amortizationSchedule?: AmortizationEntry[];

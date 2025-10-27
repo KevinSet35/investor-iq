@@ -19,7 +19,7 @@ import {
     WholesaleResult,
     ComparativeAnalysisInput,
     ComparativeAnalysisResult,
-    RentalPropertyResult
+    RentalPropertyResult,
 } from '../rental-property-analysis.interfaces';
 import { MONTHS_PER_YEAR } from '../rental-property-analysis.constants';
 
@@ -29,7 +29,7 @@ export class StrategyAnalyzer {
         afterRepairValue: number,
         repairCosts: number,
         wholesaleFee: number = 0,
-        profitMargin: number = 70
+        profitMargin: number = 70,
     ): { mao: number; potentialProfit: number; roi: number } {
         const mao = afterRepairValue * (profitMargin / 100) - repairCosts - wholesaleFee;
         const totalInvestment = mao + repairCosts + wholesaleFee;
@@ -70,10 +70,7 @@ export class StrategyAnalyzer {
     }
 
     calculateBRRRRAnalysis(input: BRRRRInput): BRRRRResult {
-        const totalInvestment =
-            input.purchasePrice +
-            input.rehabCosts +
-            (input.closingCosts ?? 0);
+        const totalInvestment = input.purchasePrice + input.rehabCosts + (input.closingCosts ?? 0);
 
         const refinanceLoanAmount = input.arv * (input.refinanceLTV / 100);
         const refinanceClosingCosts = input.refinanceClosingCosts ?? 0;
@@ -84,7 +81,7 @@ export class StrategyAnalyzer {
         const numPayments = input.refinanceLoanTermYears * MONTHS_PER_YEAR;
         const monthlyPayment = this.calculateMonthlyPayment(refinanceLoanAmount, monthlyRate, numPayments);
 
-        const effectiveMonthlyRent = input.monthlyRent * (1 - ((input.expenses.vacancyRate ?? 8) / 100));
+        const effectiveMonthlyRent = input.monthlyRent * (1 - (input.expenses.vacancyRate ?? 8) / 100);
 
         // Calculate expenses (simplified)
         let monthlyExpenses = 0;
@@ -125,7 +122,7 @@ export class StrategyAnalyzer {
         const netProfit = input.assignmentFee - totalInvestment;
         const roi = totalInvestment > 0 ? (netProfit / totalInvestment) * 100 : Infinity;
 
-        const buyerMaxPurchasePrice = input.arv * 0.70 - input.repairEstimate;
+        const buyerMaxPurchasePrice = input.arv * 0.7 - input.repairEstimate;
         const wholesalePriceToSell = input.purchasePrice + input.assignmentFee;
 
         return {
@@ -214,7 +211,8 @@ export class StrategyAnalyzer {
         const lpProfitShare = profitFromSale * (input.lpSplit / 100);
         const gpProfitShare = profitFromSale * (input.gpSplit / 100);
 
-        const lpTotalReturn = totalPrefPayments + lpCashFlowShare * input.holdPeriod + input.lpInvestment + lpProfitShare;
+        const lpTotalReturn =
+            totalPrefPayments + lpCashFlowShare * input.holdPeriod + input.lpInvestment + lpProfitShare;
         const gpTotalReturn = gpCashFlowShare * input.holdPeriod + input.gpInvestment + gpProfitShare;
 
         const lpMultiple = lpTotalReturn / input.lpInvestment;
@@ -251,7 +249,7 @@ export class StrategyAnalyzer {
         }
 
         const totalCost = pointsCost + totalInterest;
-        const effectiveRate = ((totalCost / input.loanAmount) / (input.termMonths / MONTHS_PER_YEAR)) * 100;
+        const effectiveRate = (totalCost / input.loanAmount / (input.termMonths / MONTHS_PER_YEAR)) * 100;
 
         return {
             monthlyPayment: NumberUtils.roundToTwo(monthlyPayment),
@@ -275,7 +273,8 @@ export class StrategyAnalyzer {
         const monthlyIncome = monthlyInterest + (input.servicingFeeMonthly ?? 0);
 
         const totalReturn = totalPoints + monthlyIncome * input.termMonths + input.loanAmount;
-        const annualizedYield = ((totalReturn - input.loanAmount) / input.loanAmount) / (input.termMonths / MONTHS_PER_YEAR) * 100;
+        const annualizedYield =
+            ((totalReturn - input.loanAmount) / input.loanAmount / (input.termMonths / MONTHS_PER_YEAR)) * 100;
 
         return {
             monthlyIncome: NumberUtils.roundToTwo(monthlyIncome),
@@ -321,12 +320,14 @@ export class StrategyAnalyzer {
         };
     }
 
-    calculateHouseHackingMetrics(
-        baseResult: RentalPropertyResult,
-        input: HouseHackingInput
-    ): HouseHackingResult {
+    calculateHouseHackingMetrics(baseResult: RentalPropertyResult, input: HouseHackingInput): HouseHackingResult {
         const occupiedUnitValue = (input.monthlyRent / input.totalUnits) * input.ownerOccupiedUnits;
-        const totalMonthlyPayment = baseResult.principalAndInterest + baseResult.propertyTax + baseResult.homeInsurance + baseResult.pmi + baseResult.hoa;
+        const totalMonthlyPayment =
+            baseResult.principalAndInterest +
+            baseResult.propertyTax +
+            baseResult.homeInsurance +
+            baseResult.pmi +
+            baseResult.hoa;
         const effectiveLivingCost = totalMonthlyPayment - baseResult.cashFlow.cashFlowMonthly;
         const percentOfMortgageCovered = (baseResult.cashFlow.effectiveRent / totalMonthlyPayment) * 100;
         const netHousingCost = effectiveLivingCost - occupiedUnitValue;
@@ -341,15 +342,15 @@ export class StrategyAnalyzer {
 
     compareScenarios(
         input: ComparativeAnalysisInput,
-        analyzeRentalPropertyFn: (input: any) => RentalPropertyResult
+        analyzeRentalPropertyFn: (input: any) => RentalPropertyResult,
     ): ComparativeAnalysisResult {
-        const scenarios = input.scenarios.map(scenario => analyzeRentalPropertyFn(scenario));
+        const scenarios = input.scenarios.map((scenario) => analyzeRentalPropertyFn(scenario));
         const scenarioNames = input.scenarioNames ?? input.scenarios.map((_, i) => `Scenario ${i + 1}`);
 
-        const cashFlows = scenarios.map(s => s.cashFlow.cashFlowMonthly);
-        const capRates = scenarios.map(s => s.metrics.capRate);
-        const cashOnCashReturns = scenarios.map(s => s.metrics.cashOnCashReturn);
-        const totalROIs = scenarios.map(s => s.metrics.totalReturnOnInvestment);
+        const cashFlows = scenarios.map((s) => s.cashFlow.cashFlowMonthly);
+        const capRates = scenarios.map((s) => s.metrics.capRate);
+        const cashOnCashReturns = scenarios.map((s) => s.metrics.cashOnCashReturn);
+        const totalROIs = scenarios.map((s) => s.metrics.totalReturnOnInvestment);
 
         return {
             scenarios,

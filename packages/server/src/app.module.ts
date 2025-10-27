@@ -7,13 +7,8 @@ import { RentalPropertyAnalysisModule } from './modules/rental-property-analysis
 import { PropertyInformationModule } from './modules/property-information/property-information.module';
 
 @Module({
-    imports: [
-        UsersModule,
-        MortgageCalculationModule,
-        RentalPropertyAnalysisModule,
-        PropertyInformationModule
-    ],
+    imports: [UsersModule, MortgageCalculationModule, RentalPropertyAnalysisModule, PropertyInformationModule],
     controllers: [AppController],
     providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

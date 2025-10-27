@@ -25,10 +25,7 @@ import {
     ComparativeAnalysisInput,
     ComparativeAnalysisResult,
 } from '../rental-property-analysis.interfaces';
-import {
-    PERCENT_TO_DECIMAL,
-    DEFAULT_VACANCY_RATE
-} from '../rental-property-analysis.constants';
+import { PERCENT_TO_DECIMAL, DEFAULT_VACANCY_RATE } from '../rental-property-analysis.constants';
 import { ExpenseCalculator } from './expense-calculator.service';
 import { MetricsCalculator } from './metrics-calculator.service';
 import { ProjectionCalculator } from './projection-calculator.service';
@@ -72,13 +69,13 @@ export class RentalPropertyAnalysisService {
         afterRepairValue: number,
         repairCosts: number,
         wholesaleFee: number = 0,
-        profitMargin: number = 70
+        profitMargin: number = 70,
     ): { mao: number; potentialProfit: number; roi: number } {
         return this.strategyAnalyzer.calculateMaximumAllowableOffer(
             afterRepairValue,
             repairCosts,
             wholesaleFee,
-            profitMargin
+            profitMargin,
         );
     }
 
@@ -98,7 +95,7 @@ export class RentalPropertyAnalysisService {
         contractPrice: number,
         assignmentFee: number,
         marketingCosts: number = 0,
-        otherCosts: number = 0
+        otherCosts: number = 0,
     ): { grossProfit: number; netProfit: number; roi: number; endBuyerPrice: number } {
         const wholesaleInput: WholesaleInput = {
             purchasePrice: contractPrice,
@@ -194,17 +191,14 @@ export class RentalPropertyAnalysisService {
     // ---------------- Comparative Analysis ----------------
 
     compareScenarios(input: ComparativeAnalysisInput): ComparativeAnalysisResult {
-        return this.strategyAnalyzer.compareScenarios(
-            input,
-            (scenario) => this.analyzeRentalProperty(scenario)
-        );
+        return this.strategyAnalyzer.compareScenarios(input, (scenario) => this.analyzeRentalProperty(scenario));
     }
 
     // ---------------- Enhanced metrics & builders ----------------
 
     private buildEnhancedRentalPropertyResult(
         input: RentalPropertyInput,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): RentalPropertyResult {
         const baseResult = this.buildRentalPropertyResult(input, mortgageResult);
         const enhancedMetrics = this.metricsCalculator.calculateEnhancedMetrics(
@@ -212,34 +206,30 @@ export class RentalPropertyAnalysisService {
             baseResult.metrics,
             baseResult.cashFlow,
             baseResult.operatingExpenses,
-            mortgageResult
+            mortgageResult,
         );
 
         const investmentSummary = this.metricsCalculator.calculateInvestmentSummary(
             input,
             baseResult.cashFlow,
             enhancedMetrics.totalReturnOnInvestment,
-            mortgageResult
+            mortgageResult,
         );
 
         const projectedReturns = input.holdingPeriodYears
-            ? this.projectionCalculator.calculateProjectedReturns(
-                input,
-                baseResult,
-                (inp) => this.analyzeRentalProperty(inp)
-            )
+            ? this.projectionCalculator.calculateProjectedReturns(input, baseResult, (inp) =>
+                  this.analyzeRentalProperty(inp),
+              )
             : undefined;
 
         const breakEvenAnalysis = this.projectionCalculator.calculateBreakEvenAnalysis(
             input,
             baseResult,
-            mortgageResult
+            mortgageResult,
         );
 
-        const sensitivityAnalysis = this.projectionCalculator.performSensitivityAnalysis(
-            input,
-            baseResult,
-            (inp) => this.analyzeRentalProperty(inp)
+        const sensitivityAnalysis = this.projectionCalculator.performSensitivityAnalysis(input, baseResult, (inp) =>
+            this.analyzeRentalProperty(inp),
         );
 
         const base: RentalPropertyResult = {
@@ -263,7 +253,7 @@ export class RentalPropertyAnalysisService {
 
     private buildRentalPropertyResult(
         input: RentalPropertyInput,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): RentalPropertyResult {
         const vacancyRate = input.expenses.vacancyRate ?? DEFAULT_VACANCY_RATE;
         const vacancyLoss = (input.monthlyRent * vacancyRate) / PERCENT_TO_DECIMAL;
@@ -274,14 +264,14 @@ export class RentalPropertyAnalysisService {
             effectiveMonthlyRent,
             input.propertyPrice,
             input.expenses,
-            mortgageResult
+            mortgageResult,
         );
 
         const cashFlow = this.metricsCalculator.calculateCashFlow(
             input.monthlyRent,
             effectiveMonthlyRent,
             operatingExpenses.totalMonthly,
-            mortgageResult
+            mortgageResult,
         );
 
         const metrics = this.metricsCalculator.calculateInvestmentMetrics(
@@ -289,7 +279,7 @@ export class RentalPropertyAnalysisService {
             input.propertyPrice,
             cashFlow,
             operatingExpenses.totalMonthly,
-            mortgageResult
+            mortgageResult,
         );
 
         return {
@@ -335,15 +325,11 @@ export class RentalPropertyAnalysisService {
         effectiveMonthlyRent: number,
         propertyPrice: number,
         expenses: RentalPropertyExpenses,
-        mortgageResult: MortgageCalculationResult
+        mortgageResult: MortgageCalculationResult,
     ): OperatingExpenses {
         const vacancyLoss = monthlyRent - effectiveMonthlyRent;
 
-        const baseExpenses = this.expenseCalculator.calculateOperatingExpenses(
-            monthlyRent,
-            propertyPrice,
-            expenses
-        );
+        const baseExpenses = this.expenseCalculator.calculateOperatingExpenses(monthlyRent, propertyPrice, expenses);
 
         const totalOperatingExpenses = this.sumOperatingExpenses(
             baseExpenses.propertyManagement,
@@ -358,7 +344,7 @@ export class RentalPropertyAnalysisService {
             baseExpenses.advertising,
             baseExpenses.turnover,
             mortgageResult.propertyTax,
-            mortgageResult.homeInsurance
+            mortgageResult.homeInsurance,
         );
 
         return {
@@ -391,7 +377,7 @@ export class RentalPropertyAnalysisService {
         advertising: number,
         turnover: number,
         propertyTax: number,
-        homeInsurance: number
+        homeInsurance: number,
     ): number {
         return (
             propertyManagement +
@@ -409,5 +395,4 @@ export class RentalPropertyAnalysisService {
             homeInsurance
         );
     }
-
 }

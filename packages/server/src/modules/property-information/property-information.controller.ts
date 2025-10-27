@@ -3,7 +3,7 @@ import { PropertyInformationService, PropertyInformation } from './property-info
 
 @Controller('property-information')
 export class PropertyInformationController {
-    constructor(private readonly propertyInformationService: PropertyInformationService) { }
+    constructor(private readonly propertyInformationService: PropertyInformationService) {}
 
     @Get(':id')
     async getProperty(@Param('id') id: string) {

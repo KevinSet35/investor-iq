@@ -8,4 +8,4 @@ import { MortgageCalculationModule } from '../mortgage-calculation/mortgage-calc
     controllers: [RentalPropertyAnalysisController],
     providers: [RentalPropertyAnalysisService],
 })
-export class RentalPropertyAnalysisModule { }
+export class RentalPropertyAnalysisModule {}
