@@ -261,6 +261,10 @@ export class MortgageCalculationService {
                 base.hoa,
             );
 
+            // Calculate percentages of monthly principal and interest payment
+            const principalPaidPercent = (principalPayment / base.principalAndInterest) * PERCENT_TO_DECIMAL;
+            const interestPaidPercent = (interestPayment / base.principalAndInterest) * PERCENT_TO_DECIMAL;
+
             schedule.push({
                 month,
                 principalAndInterest: NumberUtils.roundToTwo(base.principalAndInterest),
@@ -274,6 +278,8 @@ export class MortgageCalculationService {
                 remainingBalance: NumberUtils.roundToTwo(remainingBalance),
                 totalPrincipalPaid: NumberUtils.roundToTwo(totalPrincipalPaid),
                 totalInterestPaid: NumberUtils.roundToTwo(totalInterestPaid),
+                principalPaidPercent: NumberUtils.roundToTwo(principalPaidPercent),
+                interestPaidPercent: NumberUtils.roundToTwo(interestPaidPercent)
             });
         }
         return schedule;

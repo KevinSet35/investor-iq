@@ -62,6 +62,8 @@ export interface AmortizationEntry {
     remainingBalance: number;
     totalPrincipalPaid: number;
     totalInterestPaid: number;
+    principalPaidPercent: number;    // Percentage of total loan amount paid in principal
+    interestPaidPercent: number;     // Percentage of total loan amount paid in interest
 }
 
 export interface MortgageCalculationResult {
