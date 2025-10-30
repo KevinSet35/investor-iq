@@ -91,19 +91,33 @@ export interface ValidationResult {
     errors: string[];
 }
 
-export interface AffordabilityResult {
-    maxPropertyPrice: number;
-    maxLoanAmount: number;
-    downPayment: number;
-    estimatedMonthlyPayment: number;
-}
-
 export interface AffordabilityInput {
     maxMonthlyPayment: number;
     annualInterestRate: number;
     loanTermYears: number;
     downPaymentPercentage: number;
+
+    // NEW (optional but common in prequal flows)
+    grossMonthlyIncome?: number;
+    targetFrontEndDTI?: number; // e.g., 0.28
+    targetBackEndDTI?: number;  // e.g., 0.36
+    otherMonthlyDebts?: number; // car, cards, student loans
+    estimatedClosingCostsPercent?: number; // quick calc, e.g., 3%
     propertyTaxRate?: number;
     homeInsuranceAnnual?: number;
     hoaMonthly?: number;
+    pmiAssume?: boolean;
+}
+
+export interface AffordabilityResult {
+    maxPropertyPrice: number;
+    maxLoanAmount: number;
+    downPayment: number;
+    estimatedMonthlyPayment: number;
+
+    // NEW
+    estimatedClosingCosts?: number;
+    estimatedCashToClose?: number; // DP + costs - credits
+    impliedFrontEndDTI?: number;
+    impliedBackEndDTI?: number;
 }

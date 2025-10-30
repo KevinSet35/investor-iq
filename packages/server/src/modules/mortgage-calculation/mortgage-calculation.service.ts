@@ -40,17 +40,39 @@ export class MortgageCalculationService {
         const propertyTaxRate = input.propertyTaxRate ?? DEFAULT_PROPERTY_TAX_RATE;
         const homeInsuranceAnnual = input.homeInsuranceAnnual ?? DEFAULT_HOME_INSURANCE_ANNUAL;
         const hoaMonthly = input.hoaMonthly ?? 0;
+        const grossMonthlyIncome = input.grossMonthlyIncome;
+        const targetFrontEndDTI = input.targetFrontEndDTI;
+        const targetBackEndDTI = input.targetBackEndDTI;
+        const otherMonthlyDebts = input.otherMonthlyDebts ?? 0;
+        const estimatedClosingCostsPercent = input.estimatedClosingCostsPercent;
+        const pmiAssume = input.pmiAssume ?? true;
+
         this.validateAffordabilityInput(maxMonthlyPayment, annualInterestRate, loanTermYears, downPaymentPercentage);
 
         const monthlyRate = this.calculateMonthlyRate(annualInterestRate);
         const n = this.calculateTotalPayments(loanTermYears);
         const downPct = downPaymentPercentage / PERCENT_TO_DECIMAL;
 
-        const pmiRateMonthly =
-            downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI ? DEFAULT_PMI_RATE / MONTHS_PER_YEAR : 0;
+        // Determine effective max monthly payment based on DTI constraints if provided
+        let effectiveMaxMonthlyPayment = maxMonthlyPayment;
+
+        if (grossMonthlyIncome && targetFrontEndDTI) {
+            const dtiBasedMaxHousing = grossMonthlyIncome * targetFrontEndDTI;
+            effectiveMaxMonthlyPayment = Math.min(effectiveMaxMonthlyPayment, dtiBasedMaxHousing);
+        }
+
+        if (grossMonthlyIncome && targetBackEndDTI && otherMonthlyDebts) {
+            const dtiBasedMaxTotal = grossMonthlyIncome * targetBackEndDTI;
+            const availableForHousing = dtiBasedMaxTotal - otherMonthlyDebts;
+            effectiveMaxMonthlyPayment = Math.min(effectiveMaxMonthlyPayment, availableForHousing);
+        }
+
+        // PMI calculation
+        const shouldCalculatePMI = pmiAssume && downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI;
+        const pmiRateMonthly = shouldCalculatePMI ? DEFAULT_PMI_RATE / MONTHS_PER_YEAR : 0;
 
         const monthlyInsurance = homeInsuranceAnnual / MONTHS_PER_YEAR;
-        const availableForPIAndTax = maxMonthlyPayment - monthlyInsurance - hoaMonthly;
+        const availableForPIAndTax = effectiveMaxMonthlyPayment - monthlyInsurance - hoaMonthly;
 
         const taxFactor = propertyTaxRate / PERCENT_TO_DECIMAL / MONTHS_PER_YEAR;
         const loanFactor = 1 - downPct;
@@ -64,15 +86,51 @@ export class MortgageCalculationService {
 
         const monthlyPI = maxLoanAmount * mortgagePaymentRate;
         const monthlyTax = maxPropertyPrice * taxFactor * MONTHS_PER_YEAR;
-        const monthlyPMI = downPaymentPercentage < MINIMUM_DOWN_PAYMENT_FOR_NO_PMI ? maxLoanAmount * pmiRateMonthly : 0;
+        const monthlyPMI = shouldCalculatePMI ? maxLoanAmount * pmiRateMonthly : 0;
         const estimatedMonthlyPayment = monthlyPI + monthlyTax + monthlyInsurance + monthlyPMI + hoaMonthly;
 
-        return {
+        // Calculate closing costs and cash to close
+        const estimatedClosingCosts = estimatedClosingCostsPercent
+            ? (maxPropertyPrice * estimatedClosingCostsPercent) / PERCENT_TO_DECIMAL
+            : undefined;
+
+        const estimatedCashToClose = estimatedClosingCosts !== undefined
+            ? downPayment + estimatedClosingCosts
+            : undefined;
+
+        // Calculate implied DTI ratios if income is provided
+        const impliedFrontEndDTI = grossMonthlyIncome
+            ? (estimatedMonthlyPayment / grossMonthlyIncome)
+            : undefined;
+
+        const impliedBackEndDTI = grossMonthlyIncome
+            ? ((estimatedMonthlyPayment + otherMonthlyDebts) / grossMonthlyIncome)
+            : undefined;
+
+        const result: AffordabilityResult = {
             maxPropertyPrice: NumberUtils.roundToTwo(maxPropertyPrice),
             maxLoanAmount: NumberUtils.roundToTwo(maxLoanAmount),
             downPayment: NumberUtils.roundToTwo(downPayment),
             estimatedMonthlyPayment: NumberUtils.roundToTwo(estimatedMonthlyPayment),
         };
+
+        if (estimatedClosingCosts !== undefined) {
+            result.estimatedClosingCosts = NumberUtils.roundToTwo(estimatedClosingCosts);
+        }
+
+        if (estimatedCashToClose !== undefined) {
+            result.estimatedCashToClose = NumberUtils.roundToTwo(estimatedCashToClose);
+        }
+
+        if (impliedFrontEndDTI !== undefined) {
+            result.impliedFrontEndDTI = NumberUtils.roundToTwo(impliedFrontEndDTI * PERCENT_TO_DECIMAL);
+        }
+
+        if (impliedBackEndDTI !== undefined) {
+            result.impliedBackEndDTI = NumberUtils.roundToTwo(impliedBackEndDTI * PERCENT_TO_DECIMAL);
+        }
+
+        return result;
     }
 
     // ============================================================================
